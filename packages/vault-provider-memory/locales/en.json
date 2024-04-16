@@ -1,0 +1,7 @@
+{
+	"error": {
+		"memoryVaultProvider": {
+			"notFound": "The item \"{notFoundId}\" was not found in the vault"
+		}
+	}
+}
