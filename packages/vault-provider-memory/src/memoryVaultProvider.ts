@@ -3,6 +3,7 @@
 import { Guards, NotFoundError } from "@gtsc/core";
 import { nameof } from "@gtsc/nameof";
 import type { IVaultProvider } from "@gtsc/vault-provider-models";
+import type { IMemoryVaultProviderConfig } from "./models/IMemoryVaultProviderConfig";
 
 /**
  * Class for performing vault operations in memory.
@@ -22,9 +23,10 @@ export class MemoryVaultProvider implements IVaultProvider {
 
 	/**
 	 * Create a new instance of MemoryVaultProvider.
+	 * @param config The configuration for the vault provider.
 	 */
-	constructor() {
-		this._store = {};
+	constructor(config?: IMemoryVaultProviderConfig) {
+		this._store = config?.initialValues ?? {};
 	}
 
 	/**

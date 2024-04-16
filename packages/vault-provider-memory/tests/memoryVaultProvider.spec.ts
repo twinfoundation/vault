@@ -3,6 +3,21 @@
 import { MemoryVaultProvider } from "../src/memoryVaultProvider";
 
 describe("MemoryVaultProvider", () => {
+	test("can construct with some initial values", async () => {
+		const vault = new MemoryVaultProvider({
+			initialValues: {
+				"my-id": {
+					foo: "bar"
+				}
+			}
+		});
+		const result = await vault.get<{
+			foo: string;
+		}>("my-id");
+		expect(result).toBeDefined();
+		expect(result.foo).toEqual("bar");
+	});
+
 	test("can fail to set an item with no id", async () => {
 		const vault = new MemoryVaultProvider();
 		await expect(vault.set(undefined as unknown as string, undefined)).rejects.toMatchObject({
