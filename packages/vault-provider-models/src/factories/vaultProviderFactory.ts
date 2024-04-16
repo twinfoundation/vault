@@ -4,7 +4,7 @@ import { Factory } from "@gtsc/core";
 import type { IVaultProvider } from "../models/IVaultProvider";
 
 /**
- * Factory for creating faucets.
+ * Factory for creating vaults.
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const VaultProviderFactory = new Factory<IVaultProvider>("vault");
