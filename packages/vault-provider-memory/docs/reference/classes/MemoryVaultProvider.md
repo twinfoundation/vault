@@ -10,9 +10,15 @@ Class for performing vault operations in memory.
 
 ### constructor
 
-• **new MemoryVaultProvider**(): [`MemoryVaultProvider`](MemoryVaultProvider.md)
+• **new MemoryVaultProvider**(`config?`): [`MemoryVaultProvider`](MemoryVaultProvider.md)
 
 Create a new instance of MemoryVaultProvider.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `config?` | [`IMemoryVaultProviderConfig`](../interfaces/IMemoryVaultProviderConfig.md) | The configuration for the vault provider. |
 
 #### Returns
 
