@@ -28,7 +28,7 @@ Create a new instance of MemoryVaultProvider.
 
 ### get
 
-▸ **get**\<`T`\>(`id`): `Promise`\<`T`\>
+▸ **get**\<`T`\>(`requestContext`, `id`): `Promise`\<`T`\>
 
 Get a secret from the vault.
 
@@ -42,6 +42,7 @@ Get a secret from the vault.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
 | `id` | `string` | The id of the item in the vault to get. |
 
 #### Returns
@@ -62,7 +63,7 @@ ___
 
 ### remove
 
-▸ **remove**(`id`): `Promise`\<`void`\>
+▸ **remove**(`requestContext`, `id`): `Promise`\<`void`\>
 
 Remove a secret from the vault.
 
@@ -70,6 +71,7 @@ Remove a secret from the vault.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
 | `id` | `string` | The id of the item in the vault to remove. |
 
 #### Returns
@@ -90,7 +92,7 @@ ___
 
 ### set
 
-▸ **set**\<`T`\>(`id`, `item`): `Promise`\<`void`\>
+▸ **set**\<`T`\>(`requestContext`, `id`, `item`): `Promise`\<`void`\>
 
 Set a secret into the vault.
 
@@ -104,6 +106,7 @@ Set a secret into the vault.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
 | `id` | `string` | The id of the item in the vault to set. |
 | `item` | `T` | The item to add to the vault. |
 

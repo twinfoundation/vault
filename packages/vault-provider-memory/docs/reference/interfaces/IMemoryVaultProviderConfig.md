@@ -12,4 +12,4 @@ Initial values to populate the vault with.
 
 #### Index signature
 
-▪ [id: `string`]: `unknown`
+▪ [tenantId: `string`]: \{ `[id: string]`: `unknown`;  }

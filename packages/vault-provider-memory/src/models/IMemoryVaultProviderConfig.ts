@@ -8,5 +8,5 @@ export interface IMemoryVaultProviderConfig {
 	/**
 	 * Initial values to populate the vault with.
 	 */
-	initialValues?: { [id: string]: unknown };
+	initialValues?: { [tenantId: string]: { [id: string]: unknown } };
 }

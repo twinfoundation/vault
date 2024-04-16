@@ -1,6 +1,6 @@
 {
 	"name": "@gtsc/vault-provider-memory",
-	"version": "0.0.3-next.2",
+	"version": "0.0.3-next.3",
 	"description": "Vault provider implementation using in memory storage.",
 	"repository": {
 		"type": "git",
@@ -29,7 +29,7 @@
 	"dependencies": {
 		"@gtsc/core": "next",
 		"@gtsc/nameof": "next",
-		"@gtsc/vault-provider-models": "0.0.3-next.2"
+		"@gtsc/vault-provider-models": "0.0.3-next.3"
 	},
 	"devDependencies": {
 		"@gtsc/nameof-transformer": "next",
