@@ -10,4 +10,4 @@
 
 • `Const` **VaultProviderFactory**: `Factory`\<[`IVaultProvider`](interfaces/IVaultProvider.md)\>
 
-Factory for creating faucets.
+Factory for creating vaults.
