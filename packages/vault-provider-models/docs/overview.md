@@ -1,6 +1,6 @@
 # @gtsc/vault-provider-models - Overview
 
-Models which define the structure of the service implementations.
+Models which define the structure of the vault service implementations.
 
 ## Installation
 
