@@ -61,6 +61,26 @@ IVaultProvider.get
 
 ___
 
+### getStore
+
+▸ **getStore**(`tenantId`): `undefined` \| \{ `[id: string]`: `unknown`;  }
+
+Get the memory store for the specified tenant.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `tenantId` | `string` | The tenant id. |
+
+#### Returns
+
+`undefined` \| \{ `[id: string]`: `unknown`;  }
+
+The store.
+
+___
+
 ### remove
 
 ▸ **remove**(`requestContext`, `id`): `Promise`\<`void`\>
