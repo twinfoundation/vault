@@ -38,8 +38,16 @@ export class MemoryVaultProvider implements IVaultProvider {
 	 * @throws Error if the item is not found.
 	 */
 	public async get<T>(requestContext: IRequestContext, id: string): Promise<T> {
-		Guards.object<IRequestContext>(MemoryVaultProvider._CLASS_NAME, nameof(requestContext), requestContext);
-		Guards.string(MemoryVaultProvider._CLASS_NAME, nameof(requestContext.tenantId), requestContext.tenantId);
+		Guards.object<IRequestContext>(
+			MemoryVaultProvider._CLASS_NAME,
+			nameof(requestContext),
+			requestContext
+		);
+		Guards.string(
+			MemoryVaultProvider._CLASS_NAME,
+			nameof(requestContext.tenantId),
+			requestContext.tenantId
+		);
 		Guards.string(MemoryVaultProvider._CLASS_NAME, nameof(id), id);
 
 		if (Is.undefined(this._store[requestContext.tenantId]?.[id])) {
@@ -57,8 +65,16 @@ export class MemoryVaultProvider implements IVaultProvider {
 	 * @returns Nothing.
 	 */
 	public async set<T>(requestContext: IRequestContext, id: string, item: T): Promise<void> {
-		Guards.object<IRequestContext>(MemoryVaultProvider._CLASS_NAME, nameof(requestContext), requestContext);
-		Guards.string(MemoryVaultProvider._CLASS_NAME, nameof(requestContext.tenantId), requestContext.tenantId);
+		Guards.object<IRequestContext>(
+			MemoryVaultProvider._CLASS_NAME,
+			nameof(requestContext),
+			requestContext
+		);
+		Guards.string(
+			MemoryVaultProvider._CLASS_NAME,
+			nameof(requestContext.tenantId),
+			requestContext.tenantId
+		);
 		Guards.string(MemoryVaultProvider._CLASS_NAME, nameof(id), id);
 		this._store[requestContext.tenantId] ??= {};
 		this._store[requestContext.tenantId][id] = item;
@@ -72,8 +88,16 @@ export class MemoryVaultProvider implements IVaultProvider {
 	 * @throws Error if the item is not found.
 	 */
 	public async remove(requestContext: IRequestContext, id: string): Promise<void> {
-		Guards.object<IRequestContext>(MemoryVaultProvider._CLASS_NAME, nameof(requestContext), requestContext);
-		Guards.string(MemoryVaultProvider._CLASS_NAME, nameof(requestContext.tenantId), requestContext.tenantId);
+		Guards.object<IRequestContext>(
+			MemoryVaultProvider._CLASS_NAME,
+			nameof(requestContext),
+			requestContext
+		);
+		Guards.string(
+			MemoryVaultProvider._CLASS_NAME,
+			nameof(requestContext.tenantId),
+			requestContext.tenantId
+		);
 		Guards.string(MemoryVaultProvider._CLASS_NAME, nameof(id), id);
 
 		if (Is.undefined(this._store[requestContext.tenantId]?.[id])) {
