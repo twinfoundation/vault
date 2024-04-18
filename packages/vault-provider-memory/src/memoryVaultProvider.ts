@@ -106,4 +106,13 @@ export class MemoryVaultProvider implements IVaultProvider {
 
 		delete this._store[requestContext.tenantId][id];
 	}
+
+	/**
+	 * Get the memory store for the specified tenant.
+	 * @param tenantId The tenant id.
+	 * @returns The store.
+	 */
+	public getStore(tenantId: string): { [id: string]: unknown } | undefined {
+		return this._store[tenantId];
+	}
 }

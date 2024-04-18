@@ -3,11 +3,13 @@
 import type { IRequestContext } from "@gtsc/services";
 import { MemoryVaultProvider } from "../src/memoryVaultProvider";
 
+const TEST_TENANT_ID = "test-tenant";
+
 describe("MemoryVaultProvider", () => {
 	test("can construct with some initial values", async () => {
 		const vault = new MemoryVaultProvider({
 			initialValues: {
-				"my-tenant": {
+				[TEST_TENANT_ID]: {
 					"my-id": {
 						foo: "bar"
 					}
@@ -16,7 +18,7 @@ describe("MemoryVaultProvider", () => {
 		});
 		const result = await vault.get<{
 			foo: string;
-		}>({ tenantId: "my-tenant" }, "my-id");
+		}>({ tenantId: TEST_TENANT_ID }, "my-id");
 		expect(result).toBeDefined();
 		expect(result.foo).toEqual("bar");
 	});
@@ -50,7 +52,7 @@ describe("MemoryVaultProvider", () => {
 	test("can fail to set an item with no id", async () => {
 		const vault = new MemoryVaultProvider();
 		await expect(
-			vault.set({ tenantId: "my-tenant" }, undefined as unknown as string, undefined)
+			vault.set({ tenantId: TEST_TENANT_ID }, undefined as unknown as string, undefined)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
@@ -63,10 +65,14 @@ describe("MemoryVaultProvider", () => {
 
 	test("can set an item with data", async () => {
 		const vault = new MemoryVaultProvider();
-		const result = await vault.set({ tenantId: "my-tenant" }, "my-id", {
+		await vault.set({ tenantId: TEST_TENANT_ID }, "my-id", {
 			foo: "bar"
 		});
-		expect(result).toBeUndefined();
+		const store = vault.getStore(TEST_TENANT_ID);
+		expect(store).toBeDefined();
+		expect(store?.["my-id"]).toEqual({
+			foo: "bar"
+		});
 	});
 
 	test("can fail to get an item with no request context", async () => {
@@ -98,7 +104,7 @@ describe("MemoryVaultProvider", () => {
 	test("can fail to get an item with no id", async () => {
 		const vault = new MemoryVaultProvider();
 		await expect(
-			vault.get({ tenantId: "my-tenant" }, undefined as unknown as string)
+			vault.get({ tenantId: TEST_TENANT_ID }, undefined as unknown as string)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
@@ -111,7 +117,7 @@ describe("MemoryVaultProvider", () => {
 
 	test("can fail to get an item that does not exist with non existent tenant id", async () => {
 		const vault = new MemoryVaultProvider();
-		await expect(vault.get({ tenantId: "my-tenant" }, "my-id")).rejects.toMatchObject({
+		await expect(vault.get({ tenantId: TEST_TENANT_ID }, "my-id")).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: "my-id"
@@ -121,8 +127,8 @@ describe("MemoryVaultProvider", () => {
 
 	test("can fail to get an item that does not exist", async () => {
 		const vault = new MemoryVaultProvider();
-		await vault.set({ tenantId: "my-tenant" }, "my-id2", "foo");
-		await expect(vault.get({ tenantId: "my-tenant" }, "my-id")).rejects.toMatchObject({
+		await vault.set({ tenantId: TEST_TENANT_ID }, "my-id2", "foo");
+		await expect(vault.get({ tenantId: TEST_TENANT_ID }, "my-id")).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: "my-id"
@@ -132,12 +138,12 @@ describe("MemoryVaultProvider", () => {
 
 	test("can get an item with data", async () => {
 		const vault = new MemoryVaultProvider();
-		await vault.set({ tenantId: "my-tenant" }, "my-id", {
+		await vault.set({ tenantId: TEST_TENANT_ID }, "my-id", {
 			foo: "bar"
 		});
 		const result = await vault.get<{
 			foo: string;
-		}>({ tenantId: "my-tenant" }, "my-id");
+		}>({ tenantId: TEST_TENANT_ID }, "my-id");
 		expect(result).toBeDefined();
 		expect(result.foo).toEqual("bar");
 	});
@@ -171,7 +177,7 @@ describe("MemoryVaultProvider", () => {
 	test("can fail to remove an item with no id", async () => {
 		const vault = new MemoryVaultProvider();
 		await expect(
-			vault.remove({ tenantId: "my-tenant" }, undefined as unknown as string)
+			vault.remove({ tenantId: TEST_TENANT_ID }, undefined as unknown as string)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
@@ -184,7 +190,7 @@ describe("MemoryVaultProvider", () => {
 
 	test("can fail to remove an item that does not exist", async () => {
 		const vault = new MemoryVaultProvider();
-		await expect(vault.remove({ tenantId: "my-tenant" }, "my-id")).rejects.toMatchObject({
+		await expect(vault.remove({ tenantId: TEST_TENANT_ID }, "my-id")).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: "my-id"
@@ -194,11 +200,11 @@ describe("MemoryVaultProvider", () => {
 
 	test("can remove an item with data", async () => {
 		const vault = new MemoryVaultProvider();
-		await vault.set({ tenantId: "my-tenant" }, "my-id", {
+		await vault.set({ tenantId: TEST_TENANT_ID }, "my-id", {
 			foo: "bar"
 		});
-		await vault.remove({ tenantId: "my-tenant" }, "my-id");
-		await expect(vault.get({ tenantId: "my-tenant" }, "my-id")).rejects.toMatchObject({
+		await vault.remove({ tenantId: TEST_TENANT_ID }, "my-id");
+		await expect(vault.get({ tenantId: TEST_TENANT_ID }, "my-id")).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: "my-id"
