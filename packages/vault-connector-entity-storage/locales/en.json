@@ -1,0 +1,9 @@
+{
+	"error": {
+		"entityStorageVaultConnector": {
+			"keyAlreadyExists": "The key \"{existingId}\" already exists in the vault",
+			"keyNotFound": "The key \"{notFoundId}\" was not found in the vault",
+			"secretNotFound": "The secret \"{notFoundId}\" was not found in the vault"
+		}
+	}
+}

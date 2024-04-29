@@ -1,6 +1,6 @@
 {
 	"name": "@gtsc/vault",
-	"version": "0.0.3-next.4",
+	"version": "0.0.3-next.5",
 	"description": "Vault packages for GTSC",
 	"repository": {
 		"type": "git",
@@ -39,8 +39,8 @@
 		"prettier": "^3.2.5"
 	},
 	"workspaces": [
-		"packages/vault-provider-models",
-		"packages/vault-provider-memory"
+		"packages/vault-models",
+		"packages/vault-connector-entity-storage"
 	],
 	"type": "module"
 }

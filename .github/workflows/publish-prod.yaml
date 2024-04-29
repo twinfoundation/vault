@@ -8,8 +8,8 @@ on:
         required: true
         type: choice
         options:
-          - vault-provider-models
-          - vault-provider-memory
+          - vault-models
+          - vault-connector-entity-storage
 jobs:
   publish:
     runs-on: ubuntu-latest
