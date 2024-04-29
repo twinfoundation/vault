@@ -11,7 +11,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        package: [vault-provider-models, vault-provider-memory]
+        package: [vault-models, vault-connector-entity-storage]
 
     steps:
       - name: Checkout

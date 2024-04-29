@@ -3,12 +3,12 @@
 	"label": "Vault",
 	"packages": [
 		{
-			"name": "vault-provider-models",
-			"description": "Models which define the structure of the vault provider implementations."
+			"name": "vault-models",
+			"description": "Models which define the structure of the vault contracts and connectors."
 		},
 		{
-			"name": "vault-provider-memory",
-			"description": "Vault provider implementation using in memory storage."
+			"name": "vault-connector-entity-storage",
+			"description": "Vault connector implementation using entity storage."
 		}
 	]
 }
