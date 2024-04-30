@@ -102,6 +102,37 @@ The encrypted data.
 
 ___
 
+### getSecret
+
+▸ **getSecret**\<`T`\>(`requestContext`, `secretName`): `Promise`\<`T`\>
+
+Get a secret from the vault.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
+| `secretName` | `string` | The name of the secret in the vault to get. |
+
+#### Returns
+
+`Promise`\<`T`\>
+
+The secret from the vault.
+
+**`Throws`**
+
+Error if the secret is not found.
+
+___
+
 ### removeKey
 
 ▸ **removeKey**(`requestContext`, `keyName`): `Promise`\<`void`\>
@@ -148,11 +179,11 @@ Error if the secret is not found.
 
 ___
 
-### retrieveSecret
+### setSecret
 
-▸ **retrieveSecret**\<`T`\>(`requestContext`, `secretName`): `Promise`\<`T`\>
+▸ **setSecret**\<`T`\>(`requestContext`, `secretName`, `data`): `Promise`\<`void`\>
 
-Get a secret from the vault.
+Store a secret in the vault.
 
 #### Type parameters
 
@@ -165,17 +196,14 @@ Get a secret from the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `secretName` | `string` | The name of the secret in the vault to get. |
+| `secretName` | `string` | The name of the secret in the vault to set. |
+| `data` | `T` | The secret to add to the vault. |
 
 #### Returns
 
-`Promise`\<`T`\>
+`Promise`\<`void`\>
 
-The secret from the vault.
-
-**`Throws`**
-
-Error if the secret is not found.
+Nothing.
 
 ___
 
@@ -234,34 +262,6 @@ Nothing.
 #### Inherited from
 
 IService.stop
-
-___
-
-### storeSecret
-
-▸ **storeSecret**\<`T`\>(`requestContext`, `secretName`, `data`): `Promise`\<`void`\>
-
-Store a secret in the vault.
-
-#### Type parameters
-
-| Name |
-| :------ |
-| `T` |
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `requestContext` | `IRequestContext` | The context for the request. |
-| `secretName` | `string` | The name of the secret in the vault to set. |
-| `data` | `T` | The secret to add to the vault. |
-
-#### Returns
-
-`Promise`\<`void`\>
-
-Nothing.
 
 ___
 
