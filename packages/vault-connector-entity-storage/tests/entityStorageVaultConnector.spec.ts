@@ -1137,7 +1137,7 @@ describe("EntityStorageVaultConnector", () => {
 		});
 
 		await expect(
-			vaultConnector.storeSecret(
+			vaultConnector.setSecret(
 				undefined as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as Uint8Array
@@ -1159,7 +1159,7 @@ describe("EntityStorageVaultConnector", () => {
 		});
 
 		await expect(
-			vaultConnector.storeSecret(
+			vaultConnector.setSecret(
 				{} as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as Uint8Array
@@ -1181,7 +1181,7 @@ describe("EntityStorageVaultConnector", () => {
 		});
 
 		await expect(
-			vaultConnector.storeSecret(
+			vaultConnector.setSecret(
 				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as Uint8Array
@@ -1203,7 +1203,7 @@ describe("EntityStorageVaultConnector", () => {
 		});
 
 		await expect(
-			vaultConnector.storeSecret(
+			vaultConnector.setSecret(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				undefined as unknown as string,
 				undefined as unknown as Uint8Array
@@ -1224,7 +1224,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultSecretEntityStorageConnector
 		});
 
-		await vaultConnector.storeSecret(
+		await vaultConnector.setSecret(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_SECRET_NAME,
 			{ foo: "bar" }
@@ -1236,14 +1236,14 @@ describe("EntityStorageVaultConnector", () => {
 		expect(store?.[0].data).toEqual(JSON.stringify({ foo: "bar" }));
 	});
 
-	test("can fail to retrieve a secret with no request context", async () => {
+	test("can fail to get a secret with no request context", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector
 		});
 
 		await expect(
-			vaultConnector.retrieveSecret(
+			vaultConnector.getSecret(
 				undefined as unknown as IRequestContext,
 				undefined as unknown as string
 			)
@@ -1257,17 +1257,14 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to retrieve a secret with no tenant id", async () => {
+	test("can fail to get a secret with no tenant id", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector
 		});
 
 		await expect(
-			vaultConnector.retrieveSecret(
-				{} as unknown as IRequestContext,
-				undefined as unknown as string
-			)
+			vaultConnector.getSecret({} as unknown as IRequestContext, undefined as unknown as string)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
@@ -1278,14 +1275,14 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to retrieve a secret with no identity", async () => {
+	test("can fail to get a secret with no identity", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector
 		});
 
 		await expect(
-			vaultConnector.retrieveSecret(
+			vaultConnector.getSecret(
 				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
 				undefined as unknown as string
 			)
@@ -1299,14 +1296,14 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to retrieve a secret with no secret name", async () => {
+	test("can fail to get a secret with no secret name", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector
 		});
 
 		await expect(
-			vaultConnector.retrieveSecret(
+			vaultConnector.getSecret(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				undefined as unknown as string
 			)
@@ -1320,14 +1317,14 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to retrieve a secret that does not exist", async () => {
+	test("can fail to get a secret that does not exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector
 		});
 
 		await expect(
-			vaultConnector.retrieveSecret(
+			vaultConnector.getSecret(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_SECRET_NAME
 			)
@@ -1339,7 +1336,7 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can retrieve a secret", async () => {
+	test("can get a secret", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector: new MemoryEntityStorageConnector<IVaultSecret>(
@@ -1357,7 +1354,7 @@ describe("EntityStorageVaultConnector", () => {
 			)
 		});
 
-		const secret = await vaultConnector.retrieveSecret(
+		const secret = await vaultConnector.getSecret(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_SECRET_NAME
 		);

@@ -370,7 +370,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * @param item The item to add to the vault.
 	 * @returns Nothing.
 	 */
-	public async storeSecret<T>(
+	public async setSecret<T>(
 		requestContext: IRequestContext,
 		secretName: string,
 		item: T
@@ -407,7 +407,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * @returns The item from the vault.
 	 * @throws Error if the item is not found.
 	 */
-	public async retrieveSecret<T>(requestContext: IRequestContext, secretName: string): Promise<T> {
+	public async getSecret<T>(requestContext: IRequestContext, secretName: string): Promise<T> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),

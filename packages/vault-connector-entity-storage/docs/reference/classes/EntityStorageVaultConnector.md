@@ -108,6 +108,41 @@ IVaultConnector.encrypt
 
 ___
 
+### getSecret
+
+▸ **getSecret**\<`T`\>(`requestContext`, `secretName`): `Promise`\<`T`\>
+
+Get a secret from the vault.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
+| `secretName` | `string` | The name of the item in the vault to get. |
+
+#### Returns
+
+`Promise`\<`T`\>
+
+The item from the vault.
+
+**`Throws`**
+
+Error if the item is not found.
+
+#### Implementation of
+
+IVaultConnector.getSecret
+
+___
+
 ### removeKey
 
 ▸ **removeKey**(`requestContext`, `keyName`): `Promise`\<`void`\>
@@ -162,11 +197,11 @@ IVaultConnector.removeSecret
 
 ___
 
-### retrieveSecret
+### setSecret
 
-▸ **retrieveSecret**\<`T`\>(`requestContext`, `secretName`): `Promise`\<`T`\>
+▸ **setSecret**\<`T`\>(`requestContext`, `secretName`, `item`): `Promise`\<`void`\>
 
-Get a secret from the vault.
+Store a secret in the vault.
 
 #### Type parameters
 
@@ -179,21 +214,18 @@ Get a secret from the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `secretName` | `string` | The name of the item in the vault to get. |
+| `secretName` | `string` | The name of the item in the vault to set. |
+| `item` | `T` | The item to add to the vault. |
 
 #### Returns
 
-`Promise`\<`T`\>
+`Promise`\<`void`\>
 
-The item from the vault.
-
-**`Throws`**
-
-Error if the item is not found.
+Nothing.
 
 #### Implementation of
 
-IVaultConnector.retrieveSecret
+IVaultConnector.setSecret
 
 ___
 
@@ -220,38 +252,6 @@ The signature for the data.
 #### Implementation of
 
 IVaultConnector.sign
-
-___
-
-### storeSecret
-
-▸ **storeSecret**\<`T`\>(`requestContext`, `secretName`, `item`): `Promise`\<`void`\>
-
-Store a secret in the vault.
-
-#### Type parameters
-
-| Name |
-| :------ |
-| `T` |
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `requestContext` | `IRequestContext` | The context for the request. |
-| `secretName` | `string` | The name of the item in the vault to set. |
-| `item` | `T` | The item to add to the vault. |
-
-#### Returns
-
-`Promise`\<`void`\>
-
-Nothing.
-
-#### Implementation of
-
-IVaultConnector.storeSecret
 
 ___
 

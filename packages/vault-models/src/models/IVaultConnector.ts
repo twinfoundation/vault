@@ -90,7 +90,7 @@ export interface IVaultConnector extends IService {
 	 * @param data The secret to add to the vault.
 	 * @returns Nothing.
 	 */
-	storeSecret<T>(requestContext: IRequestContext, secretName: string, data: T): Promise<void>;
+	setSecret<T>(requestContext: IRequestContext, secretName: string, data: T): Promise<void>;
 
 	/**
 	 * Get a secret from the vault.
@@ -99,7 +99,7 @@ export interface IVaultConnector extends IService {
 	 * @returns The secret from the vault.
 	 * @throws Error if the secret is not found.
 	 */
-	retrieveSecret<T>(requestContext: IRequestContext, secretName: string): Promise<T>;
+	getSecret<T>(requestContext: IRequestContext, secretName: string): Promise<T>;
 
 	/**
 	 * Remove a secret from the vault.
