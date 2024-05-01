@@ -255,7 +255,7 @@ describe("EntityStorageVaultConnector", () => {
 			"Ed25519"
 		);
 
-		expect(key.length).toEqual(32);
+		expect(Converter.base64ToBytes(key).length).toEqual(32);
 
 		const store = vaultKeyEntityStorageConnector.getStore(TEST_TENANT_ID);
 
@@ -926,7 +926,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.sign(
 				undefined as unknown as IRequestContext,
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -948,7 +948,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.sign(
 				{} as unknown as IRequestContext,
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -970,7 +970,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.sign(
 				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -992,7 +992,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.sign(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1014,11 +1014,11 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.sign(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.uint8Array",
+			message: "guard.string",
 			properties: {
 				property: "data",
 				value: "undefined"
@@ -1036,7 +1036,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.sign(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				new Uint8Array()
+				"foo"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
@@ -1070,10 +1070,10 @@ describe("EntityStorageVaultConnector", () => {
 		const signature = await vaultConnector.sign(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_KEY_NAME,
-			new Uint8Array([1, 2, 3, 4, 5])
+			Converter.bytesToBase64(new Uint8Array([1, 2, 3, 4, 5]))
 		);
 
-		expect(Converter.bytesToBase64(signature)).toEqual(
+		expect(signature).toEqual(
 			"xYHh6iMIUHWdAUcgj6ZiAVtpwl03k730MhupevDePA3OrDZ+8GsoVoOC+0MGSm75C1m6cnE9AlTHRcMWnN7rBQ=="
 		);
 	});
@@ -1088,8 +1088,8 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				undefined as unknown as IRequestContext,
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string,
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1111,8 +1111,8 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{} as unknown as IRequestContext,
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string,
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1134,8 +1134,8 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string,
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1157,8 +1157,8 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				undefined as unknown as string,
-				undefined as unknown as Uint8Array,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string,
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1180,12 +1180,12 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				undefined as unknown as Uint8Array,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string,
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.uint8Array",
+			message: "guard.string",
 			properties: {
 				property: "data",
 				value: "undefined"
@@ -1203,12 +1203,12 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				new Uint8Array(),
-				undefined as unknown as Uint8Array
+				"foo",
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.uint8Array",
+			message: "guard.string",
 			properties: {
 				property: "signature",
 				value: "undefined"
@@ -1226,8 +1226,8 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				new Uint8Array(),
-				new Uint8Array()
+				"foo",
+				"foo"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
@@ -1261,10 +1261,8 @@ describe("EntityStorageVaultConnector", () => {
 		const verified = await vaultConnector.verify(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_KEY_NAME,
-			new Uint8Array([1, 2, 3, 4, 5]),
-			Converter.base64ToBytes(
-				"xYHh6iMIUHWdAUcgj6ZiAVtpwl03k730MhupevDePA3OrDZ+8GsoVoOC+0MGSm75C1m6cnE9AlTHRcMWnN7rBQ=="
-			)
+			Converter.bytesToBase64(new Uint8Array([1, 2, 3, 4, 5])),
+			"xYHh6iMIUHWdAUcgj6ZiAVtpwl03k730MhupevDePA3OrDZ+8GsoVoOC+0MGSm75C1m6cnE9AlTHRcMWnN7rBQ=="
 		);
 
 		expect(verified).toEqual(true);
@@ -1281,7 +1279,7 @@ describe("EntityStorageVaultConnector", () => {
 				undefined as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1304,7 +1302,7 @@ describe("EntityStorageVaultConnector", () => {
 				{} as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1327,7 +1325,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1350,7 +1348,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1373,7 +1371,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1396,11 +1394,11 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"ChaCha20Poly1305",
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.uint8Array",
+			message: "guard.string",
 			properties: {
 				property: "data",
 				value: "undefined"
@@ -1419,7 +1417,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"ChaCha20Poly1305",
-				new Uint8Array()
+				"foo"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
@@ -1454,10 +1452,10 @@ describe("EntityStorageVaultConnector", () => {
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_KEY_NAME,
 			"ChaCha20Poly1305",
-			new Uint8Array([1, 2, 3, 4, 5])
+			Converter.bytesToBase64(new Uint8Array([1, 2, 3, 4, 5]))
 		);
 
-		expect(encrypted.length).toEqual(17);
+		expect(Converter.base64ToBytes(encrypted).length).toEqual(17);
 	});
 
 	test("can fail to decrypt with a key with no request context", async () => {
@@ -1471,7 +1469,7 @@ describe("EntityStorageVaultConnector", () => {
 				undefined as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1494,7 +1492,7 @@ describe("EntityStorageVaultConnector", () => {
 				{} as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1517,7 +1515,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1540,7 +1538,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1563,7 +1561,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -1586,11 +1584,11 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"ChaCha20Poly1305",
-				undefined as unknown as Uint8Array
+				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.uint8Array",
+			message: "guard.string",
 			properties: {
 				property: "encryptedData",
 				value: "undefined"
@@ -1609,7 +1607,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"ChaCha20Poly1305",
-				new Uint8Array()
+				"foo"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
@@ -1644,10 +1642,10 @@ describe("EntityStorageVaultConnector", () => {
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_KEY_NAME,
 			"ChaCha20Poly1305",
-			Converter.base64ToBytes("pqyhvnpz5alSH/C7sgPIvkQ=")
+			"pqyhvnpz5alSH/C7sgPIvkQ="
 		);
 
-		expect(decrypted).toEqual(new Uint8Array([1, 2, 3, 4, 5]));
+		expect(decrypted).toEqual(Converter.bytesToBase64(new Uint8Array([1, 2, 3, 4, 5])));
 	});
 
 	test("can fail to store a secret with no request context", async () => {
