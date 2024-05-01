@@ -235,6 +235,54 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	}
 
 	/**
+	 * Rename a key in the vault.
+	 * @param requestContext The context for the request.
+	 * @param name The name of the key to rename.
+	 * @param newName The new name of the key.
+	 * @returns Nothing.
+	 */
+	public async renameKey(
+		requestContext: IRequestContext,
+		name: string,
+		newName: string
+	): Promise<void> {
+		Guards.object<IRequestContext>(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext),
+			requestContext
+		);
+		Guards.string(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext.tenantId),
+			requestContext.tenantId
+		);
+		Guards.string(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext.identity),
+			requestContext.identity
+		);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(newName), newName);
+
+		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
+			requestContext,
+			`${requestContext.identity}/${name}`
+		);
+		if (Is.empty(vaultKey)) {
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
+		}
+
+		await this._vaultKeyEntityStorageConnector.remove(
+			requestContext,
+			`${requestContext.identity}/${name}`
+		);
+
+		vaultKey.id = `${requestContext.identity}/${newName}`;
+
+		await this._vaultKeyEntityStorageConnector.set(requestContext, vaultKey);
+	}
+
+	/**
 	 * Remove a key from the vault.
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to create in the value.

@@ -224,6 +224,28 @@ Error if the secret is not found.
 
 ___
 
+### renameKey
+
+▸ **renameKey**(`requestContext`, `name`, `newName`): `Promise`\<`void`\>
+
+Rename a key in the vault.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
+| `name` | `string` | The name of the key to rename. |
+| `newName` | `string` | The new name of the key. |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+Nothing.
+
+___
+
 ### setSecret
 
 ▸ **setSecret**\<`T`\>(`requestContext`, `name`, `data`): `Promise`\<`void`\>

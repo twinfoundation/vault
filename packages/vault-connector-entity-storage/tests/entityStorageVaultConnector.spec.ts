@@ -619,6 +619,171 @@ describe("EntityStorageVaultConnector", () => {
 		expect(key.publicKey).toEqual("v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU=");
 	});
 
+	test("can fail to rename a key with no request context", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.renameKey(
+				undefined as unknown as IRequestContext,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.objectUndefined",
+			properties: {
+				property: "requestContext",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to rename a key with no tenant id", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.renameKey(
+				{} as unknown as IRequestContext,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "requestContext.tenantId",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to rename a key with no identity", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.renameKey(
+				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "requestContext.identity",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to rename a key with no key name", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.renameKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "name",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to rename a key with no new key name", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.renameKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				"foo",
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "newName",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to rename a key if it doesn't exist", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.renameKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				TEST_KEY_NAME,
+				"foo"
+			)
+		).rejects.toMatchObject({
+			name: "NotFoundError",
+			properties: {
+				notFoundId: TEST_KEY_NAME
+			}
+		});
+	});
+
+	test("can rename a key", async () => {
+		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<IVaultKey>(
+			VaultKeyDescriptor,
+			{
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
+				}
+			}
+		);
+
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await vaultConnector.renameKey(
+			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+			TEST_KEY_NAME,
+			"key2"
+		);
+
+		const store = vaultKeyEntityStorageConnector.getStore(TEST_TENANT_ID);
+
+		expect(store?.length).toEqual(1);
+		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/key2`);
+	});
+
 	test("can fail to remove a key with no request context", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
@@ -720,23 +885,24 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can remove a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<IVaultKey>(
+			VaultKeyDescriptor,
+			{
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}
+		);
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector
 		});
 
@@ -747,7 +913,7 @@ describe("EntityStorageVaultConnector", () => {
 
 		const store = vaultKeyEntityStorageConnector.getStore(TEST_TENANT_ID);
 
-		expect(store?.length).toEqual(undefined);
+		expect(store?.length).toEqual(0);
 	});
 
 	test("can fail to sign with a key with no request context", async () => {
