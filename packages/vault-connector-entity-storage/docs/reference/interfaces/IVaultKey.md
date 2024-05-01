@@ -30,6 +30,6 @@ ___
 
 ### type
 
-• **type**: `string`
+• **type**: ``"Ed25519"``
 
 The type of the key e.g. Ed25519.

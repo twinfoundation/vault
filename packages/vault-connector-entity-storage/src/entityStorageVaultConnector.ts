@@ -5,7 +5,7 @@ import { Bip39, ChaCha20Poly1305, Ed25519 } from "@gtsc/crypto";
 import type { IEntityStorageConnector } from "@gtsc/entity-storage-models";
 import { nameof } from "@gtsc/nameof";
 import type { IRequestContext } from "@gtsc/services";
-import type { IVaultConnector, VaultKeyType, VaultEncryptionType } from "@gtsc/vault-models";
+import type { IVaultConnector, VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
 import type { IVaultKey } from "./models/IVaultKey";
 import type { IVaultSecret } from "./models/IVaultSecret";
 
@@ -118,6 +118,63 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		await this._vaultKeyEntityStorageConnector.set(requestContext, vaultKey);
 
 		return publicKey;
+	}
+
+	/**
+	 * Get a key from the vault.
+	 * @param requestContext The context for the request.
+	 * @param keyName The name of the key to get from the vault.
+	 * @returns The key.
+	 */
+	public async getKey(
+		requestContext: IRequestContext,
+		keyName: string
+	): Promise<{
+		/**
+		 * The type of the key e.g. Ed25519.
+		 */
+		type: VaultKeyType;
+
+		/**
+		 * The private key in base64 format.
+		 */
+		privateKey: string;
+
+		/**
+		 * The public key in base64 format.
+		 */
+		publicKey: string;
+	}> {
+		Guards.object<IRequestContext>(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext),
+			requestContext
+		);
+		Guards.string(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext.tenantId),
+			requestContext.tenantId
+		);
+		Guards.string(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext.identity),
+			requestContext.identity
+		);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
+
+		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
+			requestContext,
+			`${requestContext.identity}/${keyName}`
+		);
+		if (Is.empty(vaultKey)) {
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", keyName);
+		}
+
+		return {
+			type: vaultKey.type,
+			privateKey: vaultKey.privateKey,
+			publicKey: vaultKey.publicKey
+		};
 	}
 
 	/**

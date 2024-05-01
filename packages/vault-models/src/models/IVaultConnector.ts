@@ -22,6 +22,32 @@ export interface IVaultConnector extends IService {
 	): Promise<Uint8Array>;
 
 	/**
+	 * Get a key from the vault.
+	 * @param requestContext The context for the request.
+	 * @param keyName The name of the key to get from the vault.
+	 * @returns The key.
+	 */
+	getKey(
+		requestContext: IRequestContext,
+		keyName: string
+	): Promise<{
+		/**
+		 * The type of the key e.g. Ed25519.
+		 */
+		type: VaultKeyType;
+
+		/**
+		 * The private key in base64 format.
+		 */
+		privateKey: string;
+
+		/**
+		 * The public key in base64 format.
+		 */
+		publicKey: string;
+	}>;
+
+	/**
 	 * Remove a key from the vault.
 	 * @param requestContext The context for the request.
 	 * @param keyName The name of the key to remove from the vault.

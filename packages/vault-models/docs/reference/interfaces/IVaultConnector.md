@@ -102,6 +102,27 @@ The encrypted data.
 
 ___
 
+### getKey
+
+▸ **getKey**(`requestContext`, `keyName`): `Promise`\<\{ `privateKey`: `string` ; `publicKey`: `string` ; `type`: ``"Ed25519"``  }\>
+
+Get a key from the vault.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
+| `keyName` | `string` | The name of the key to get from the vault. |
+
+#### Returns
+
+`Promise`\<\{ `privateKey`: `string` ; `publicKey`: `string` ; `type`: ``"Ed25519"``  }\>
+
+The key.
+
+___
+
 ### getSecret
 
 ▸ **getSecret**\<`T`\>(`requestContext`, `secretName`): `Promise`\<`T`\>
