@@ -61,6 +61,15 @@ export interface IVaultConnector extends IService {
 	}>;
 
 	/**
+	 * Rename a key in the vault.
+	 * @param requestContext The context for the request.
+	 * @param name The name of the key to rename.
+	 * @param newName The new name of the key.
+	 * @returns Nothing.
+	 */
+	renameKey(requestContext: IRequestContext, name: string, newName: string): Promise<void>;
+
+	/**
 	 * Remove a key from the vault.
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to remove from the vault.

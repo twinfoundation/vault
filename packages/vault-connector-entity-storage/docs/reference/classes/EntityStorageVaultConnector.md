@@ -250,6 +250,32 @@ IVaultConnector.removeSecret
 
 ___
 
+### renameKey
+
+▸ **renameKey**(`requestContext`, `name`, `newName`): `Promise`\<`void`\>
+
+Rename a key in the vault.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
+| `name` | `string` | The name of the key to rename. |
+| `newName` | `string` | The new name of the key. |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+Nothing.
+
+#### Implementation of
+
+IVaultConnector.renameKey
+
+___
+
 ### setSecret
 
 ▸ **setSecret**\<`T`\>(`requestContext`, `name`, `item`): `Promise`\<`void`\>
