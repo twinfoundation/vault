@@ -11,25 +11,38 @@ export interface IVaultConnector extends IService {
 	/**
 	 * Create a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to create in the vault.
-	 * @param keyType The type of key to create.
+	 * @param name The name of the key to create in the vault.
+	 * @param type The type of key to create.
 	 * @returns The public key for the key pair.
 	 */
-	createKey(
+	createKey(requestContext: IRequestContext, name: string, type: VaultKeyType): Promise<Uint8Array>;
+
+	/**
+	 * Add a key to the vault.
+	 * @param requestContext The context for the request.
+	 * @param name The name of the key to add to the vault.
+	 * @param type The type of key to add.
+	 * @param privateKey The private key in base64 format.
+	 * @param publicKey The public key in base64 format.
+	 * @returns Nothing.
+	 */
+	addKey(
 		requestContext: IRequestContext,
-		keyName: string,
-		keyType: VaultKeyType
-	): Promise<Uint8Array>;
+		name: string,
+		type: VaultKeyType,
+		privateKey: string,
+		publicKey: string
+	): Promise<void>;
 
 	/**
 	 * Get a key from the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to get from the vault.
+	 * @param name The name of the key to get from the vault.
 	 * @returns The key.
 	 */
 	getKey(
 		requestContext: IRequestContext,
-		keyName: string
+		name: string
 	): Promise<{
 		/**
 		 * The type of the key e.g. Ed25519.
@@ -50,31 +63,31 @@ export interface IVaultConnector extends IService {
 	/**
 	 * Remove a key from the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to remove from the vault.
+	 * @param name The name of the key to remove from the vault.
 	 * @returns Nothing.
 	 */
-	removeKey(requestContext: IRequestContext, keyName: string): Promise<void>;
+	removeKey(requestContext: IRequestContext, name: string): Promise<void>;
 
 	/**
 	 * Sign the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for signing.
+	 * @param name The name of the key to use for signing.
 	 * @param data The data to sign.
 	 * @returns The signature for the data.
 	 */
-	sign(requestContext: IRequestContext, keyName: string, data: Uint8Array): Promise<Uint8Array>;
+	sign(requestContext: IRequestContext, name: string, data: Uint8Array): Promise<Uint8Array>;
 
 	/**
 	 * Verify the signature of the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for verification.
+	 * @param name The name of the key to use for verification.
 	 * @param data The data that was signed.
 	 * @param signature The signature to verify.
 	 * @returns True if the verification is successful.
 	 */
 	verify(
 		requestContext: IRequestContext,
-		keyName: string,
+		name: string,
 		data: Uint8Array,
 		signature: Uint8Array
 	): Promise<boolean>;
@@ -82,14 +95,14 @@ export interface IVaultConnector extends IService {
 	/**
 	 * Encrypt the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for encryption.
+	 * @param name The name of the key to use for encryption.
 	 * @param encryptionType The type of encryption to use.
 	 * @param data The data to encrypt.
 	 * @returns The encrypted data.
 	 */
 	encrypt(
 		requestContext: IRequestContext,
-		keyName: string,
+		name: string,
 		encryptionType: VaultEncryptionType,
 		data: Uint8Array
 	): Promise<Uint8Array>;
@@ -97,14 +110,14 @@ export interface IVaultConnector extends IService {
 	/**
 	 * Decrypt the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for decryption.
+	 * @param name The name of the key to use for decryption.
 	 * @param encryptionType The type of encryption to use.
 	 * @param encryptedData The data to decrypt.
 	 * @returns The decrypted data.
 	 */
 	decrypt(
 		requestContext: IRequestContext,
-		keyName: string,
+		name: string,
 		encryptionType: VaultEncryptionType,
 		encryptedData: Uint8Array
 	): Promise<Uint8Array>;
@@ -112,27 +125,27 @@ export interface IVaultConnector extends IService {
 	/**
 	 * Store a secret in the vault.
 	 * @param requestContext The context for the request.
-	 * @param secretName The name of the secret in the vault to set.
+	 * @param name The name of the secret in the vault to set.
 	 * @param data The secret to add to the vault.
 	 * @returns Nothing.
 	 */
-	setSecret<T>(requestContext: IRequestContext, secretName: string, data: T): Promise<void>;
+	setSecret<T>(requestContext: IRequestContext, name: string, data: T): Promise<void>;
 
 	/**
 	 * Get a secret from the vault.
 	 * @param requestContext The context for the request.
-	 * @param secretName The name of the secret in the vault to get.
+	 * @param name The name of the secret in the vault to get.
 	 * @returns The secret from the vault.
 	 * @throws Error if the secret is not found.
 	 */
-	getSecret<T>(requestContext: IRequestContext, secretName: string): Promise<T>;
+	getSecret<T>(requestContext: IRequestContext, name: string): Promise<T>;
 
 	/**
 	 * Remove a secret from the vault.
 	 * @param requestContext The context for the request.
-	 * @param secretName The name of the secret in the vault to remove.
+	 * @param name The name of the secret in the vault to remove.
 	 * @returns Nothing.
 	 * @throws Error if the secret is not found.
 	 */
-	removeSecret(requestContext: IRequestContext, secretName: string): Promise<void>;
+	removeSecret(requestContext: IRequestContext, name: string): Promise<void>;
 }

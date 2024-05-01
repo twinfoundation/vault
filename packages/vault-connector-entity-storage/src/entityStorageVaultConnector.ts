@@ -59,14 +59,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Create a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to create in the vault.
-	 * @param keyType The type of key to create.
+	 * @param name The name of the key to create in the vault.
+	 * @param type The type of key to create.
 	 * @returns The public key for the key pair.
 	 */
 	public async createKey(
 		requestContext: IRequestContext,
-		keyName: string,
-		keyType: VaultKeyType
+		name: string,
+		type: VaultKeyType
 	): Promise<Uint8Array> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
@@ -83,23 +83,20 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
-		Guards.arrayOneOf<VaultKeyType>(
-			EntityStorageVaultConnector._CLASS_NAME,
-			nameof(keyType),
-			keyType,
-			["Ed25519"]
-		);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
+			"Ed25519"
+		]);
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 		if (!Is.empty(existingVaultKey)) {
 			throw new AlreadyExistsError(
 				EntityStorageVaultConnector._CLASS_NAME,
 				"keyAlreadyExists",
-				keyName
+				name
 			);
 		}
 
@@ -109,8 +106,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const publicKey = Ed25519.publicKeyFromPrivateKey(privateKey);
 
 		const vaultKey: IVaultKey = {
-			id: `${requestContext.identity}/${keyName}`,
-			type: keyType,
+			id: `${requestContext.identity}/${name}`,
+			type,
 			privateKey: Converter.bytesToBase64(privateKey),
 			publicKey: Converter.bytesToBase64(publicKey)
 		};
@@ -121,14 +118,74 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	}
 
 	/**
+	 * Add a key to the vault.
+	 * @param requestContext The context for the request.
+	 * @param name The name of the key to add to the vault.
+	 * @param type The type of key to add.
+	 * @param privateKey The private key in base64 format.
+	 * @param publicKey The public key in base64 format.
+	 * @returns Nothing.
+	 */
+	public async addKey(
+		requestContext: IRequestContext,
+		name: string,
+		type: VaultKeyType,
+		privateKey: string,
+		publicKey: string
+	): Promise<void> {
+		Guards.object<IRequestContext>(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext),
+			requestContext
+		);
+		Guards.string(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext.tenantId),
+			requestContext.tenantId
+		);
+		Guards.string(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(requestContext.identity),
+			requestContext.identity
+		);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
+			"Ed25519"
+		]);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(privateKey), privateKey);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(publicKey), publicKey);
+
+		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
+			requestContext,
+			`${requestContext.identity}/${name}`
+		);
+		if (!Is.empty(existingVaultKey)) {
+			throw new AlreadyExistsError(
+				EntityStorageVaultConnector._CLASS_NAME,
+				"keyAlreadyExists",
+				name
+			);
+		}
+
+		const vaultKey: IVaultKey = {
+			id: `${requestContext.identity}/${name}`,
+			type,
+			privateKey,
+			publicKey
+		};
+
+		await this._vaultKeyEntityStorageConnector.set(requestContext, vaultKey);
+	}
+
+	/**
 	 * Get a key from the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to get from the vault.
+	 * @param name The name of the key to get from the vault.
 	 * @returns The key.
 	 */
 	public async getKey(
 		requestContext: IRequestContext,
-		keyName: string
+		name: string
 	): Promise<{
 		/**
 		 * The type of the key e.g. Ed25519.
@@ -160,14 +217,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 		if (Is.empty(vaultKey)) {
-			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", keyName);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
 		return {
@@ -180,10 +237,10 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Remove a key from the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to create in the value.
+	 * @param name The name of the key to create in the value.
 	 * @returns Nothing.
 	 */
-	public async removeKey(requestContext: IRequestContext, keyName: string): Promise<void> {
+	public async removeKey(requestContext: IRequestContext, name: string): Promise<void> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -199,32 +256,32 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 		if (Is.empty(vaultKey)) {
-			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", keyName);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
 		await this._vaultKeyEntityStorageConnector.remove(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 	}
 
 	/**
 	 * Sign the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for signing.
+	 * @param name The name of the key to use for signing.
 	 * @param data The data to sign.
 	 * @returns The signature for the data.
 	 */
 	public async sign(
 		requestContext: IRequestContext,
-		keyName: string,
+		name: string,
 		data: Uint8Array
 	): Promise<Uint8Array> {
 		Guards.object<IRequestContext>(
@@ -242,15 +299,15 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 		if (Is.empty(vaultKey)) {
-			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", keyName);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
 		return Ed25519.sign(Converter.base64ToBytes(vaultKey.privateKey), data);
@@ -259,14 +316,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Verify the signature of the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for verification.
+	 * @param name The name of the key to use for verification.
 	 * @param data The data that was signed.
 	 * @param signature The signature to verify.
 	 * @returns True if the verification is successful.
 	 */
 	public async verify(
 		requestContext: IRequestContext,
-		keyName: string,
+		name: string,
 		data: Uint8Array,
 		signature: Uint8Array
 	): Promise<boolean> {
@@ -285,16 +342,16 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
 		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(signature), signature);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 		if (Is.empty(vaultKey)) {
-			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", keyName);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
 		return Ed25519.verify(Converter.base64ToBytes(vaultKey.publicKey), data, signature);
@@ -303,14 +360,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Encrypt the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for encryption.
+	 * @param name The name of the key to use for encryption.
 	 * @param encryptionType The type of encryption to use.
 	 * @param data The data to encrypt.
 	 * @returns The encrypted data.
 	 */
 	public async encrypt(
 		requestContext: IRequestContext,
-		keyName: string,
+		name: string,
 		encryptionType: VaultEncryptionType,
 		data: Uint8Array
 	): Promise<Uint8Array> {
@@ -329,7 +386,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultEncryptionType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
@@ -340,10 +397,10 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 		if (Is.empty(vaultKey)) {
-			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", keyName);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
 		const privateKey = Converter.base64ToBytes(vaultKey.privateKey);
@@ -363,14 +420,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Decrypt the data using a key in the vault.
 	 * @param requestContext The context for the request.
-	 * @param keyName The name of the key to use for decryption.
+	 * @param name The name of the key to use for decryption.
 	 * @param encryptionType The type of encryption to use.
 	 * @param encryptedData The data to decrypt.
 	 * @returns The decrypted data.
 	 */
 	public async decrypt(
 		requestContext: IRequestContext,
-		keyName: string,
+		name: string,
 		encryptionType: VaultEncryptionType,
 		encryptedData: Uint8Array
 	): Promise<Uint8Array> {
@@ -389,7 +446,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(keyName), keyName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultEncryptionType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
@@ -404,10 +461,10 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${keyName}`
+			`${requestContext.identity}/${name}`
 		);
 		if (Is.empty(vaultKey)) {
-			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", keyName);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
 		const privateKey = Converter.base64ToBytes(vaultKey.privateKey);
@@ -423,15 +480,11 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Store a secret in the vault.
 	 * @param requestContext The context for the request.
-	 * @param secretName The name of the item in the vault to set.
+	 * @param name The name of the item in the vault to set.
 	 * @param item The item to add to the vault.
 	 * @returns Nothing.
 	 */
-	public async setSecret<T>(
-		requestContext: IRequestContext,
-		secretName: string,
-		item: T
-	): Promise<void> {
+	public async setSecret<T>(requestContext: IRequestContext, name: string, item: T): Promise<void> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -447,10 +500,10 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(secretName), secretName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const vaultSecret: IVaultSecret = {
-			id: `${requestContext.identity}/${secretName}`,
+			id: `${requestContext.identity}/${name}`,
 			data: JSON.stringify(item)
 		};
 
@@ -460,11 +513,11 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Get a secret from the vault.
 	 * @param requestContext The context for the request.
-	 * @param secretName The name of the item in the vault to get.
+	 * @param name The name of the item in the vault to get.
 	 * @returns The item from the vault.
 	 * @throws Error if the item is not found.
 	 */
-	public async getSecret<T>(requestContext: IRequestContext, secretName: string): Promise<T> {
+	public async getSecret<T>(requestContext: IRequestContext, name: string): Promise<T> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -480,19 +533,15 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(secretName), secretName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const secret = await this._vaultSecretEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${secretName}`
+			`${requestContext.identity}/${name}`
 		);
 
 		if (Is.empty(secret)) {
-			throw new NotFoundError(
-				EntityStorageVaultConnector._CLASS_NAME,
-				"secretNotFound",
-				secretName
-			);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "secretNotFound", name);
 		}
 
 		return JSON.parse(secret.data);
@@ -501,11 +550,11 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Remove a secret from the vault.
 	 * @param requestContext The context for the request.
-	 * @param secretName The name of the item in the vault to remove.
+	 * @param name The name of the item in the vault to remove.
 	 * @returns Nothing.
 	 * @throws Error if the item is not found.
 	 */
-	public async removeSecret(requestContext: IRequestContext, secretName: string): Promise<void> {
+	public async removeSecret(requestContext: IRequestContext, name: string): Promise<void> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -521,24 +570,20 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(secretName), secretName);
+		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const secret = await this._vaultSecretEntityStorageConnector.get(
 			requestContext,
-			`${requestContext.identity}/${secretName}`
+			`${requestContext.identity}/${name}`
 		);
 
 		if (Is.empty(secret)) {
-			throw new NotFoundError(
-				EntityStorageVaultConnector._CLASS_NAME,
-				"secretNotFound",
-				secretName
-			);
+			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "secretNotFound", name);
 		}
 
 		return this._vaultSecretEntityStorageConnector.remove(
 			requestContext,
-			`${requestContext.identity}/${secretName}`
+			`${requestContext.identity}/${name}`
 		);
 	}
 }
