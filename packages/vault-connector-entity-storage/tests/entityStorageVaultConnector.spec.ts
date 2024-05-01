@@ -265,6 +265,133 @@ describe("EntityStorageVaultConnector", () => {
 		expect(Converter.base64ToBytes(store?.[0].publicKey ?? "").length).toEqual(32);
 	});
 
+	test("can fail to get a key with no request context", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.getKey(undefined as unknown as IRequestContext, undefined as unknown as string)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.objectUndefined",
+			properties: {
+				property: "requestContext",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to get a key with no tenant id", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.getKey({} as unknown as IRequestContext, undefined as unknown as string)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "requestContext.tenantId",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to get a key with no identity", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.getKey(
+				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "requestContext.identity",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to get a key with no key name", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.getKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "keyName",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to get a key if it doesn't exist", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.getKey({ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID }, TEST_KEY_NAME)
+		).rejects.toMatchObject({
+			name: "NotFoundError",
+			properties: {
+				notFoundId: TEST_KEY_NAME
+			}
+		});
+	});
+
+	test("can get a key", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
+				VaultKeyDescriptor,
+				{
+					initialValues: {
+						[TEST_TENANT_ID]: [
+							{
+								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+								type: "Ed25519",
+								privateKey:
+									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							}
+						]
+					}
+				}
+			),
+			vaultSecretEntityStorageConnector
+		});
+
+		const key = await vaultConnector.getKey(
+			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+			TEST_KEY_NAME
+		);
+
+		expect(key.type).toEqual("Ed25519");
+		expect(key.privateKey).toEqual(
+			"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ=="
+		);
+		expect(key.publicKey).toEqual("v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU=");
+	});
+
 	test("can fail to remove a key with no request context", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
