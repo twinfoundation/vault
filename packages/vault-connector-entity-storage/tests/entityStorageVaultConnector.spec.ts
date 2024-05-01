@@ -180,7 +180,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "keyName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -202,7 +202,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.arrayOneOf",
 			properties: {
-				property: "keyType",
+				property: "type",
 				value: "undefined"
 			}
 		});
@@ -256,6 +256,233 @@ describe("EntityStorageVaultConnector", () => {
 		);
 
 		expect(key.length).toEqual(32);
+
+		const store = vaultKeyEntityStorageConnector.getStore(TEST_TENANT_ID);
+
+		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`);
+		expect(store?.[0].type).toEqual("Ed25519");
+		expect(Converter.base64ToBytes(store?.[0].privateKey ?? "").length).toEqual(64);
+		expect(Converter.base64ToBytes(store?.[0].publicKey ?? "").length).toEqual(32);
+	});
+
+	test("can fail to add a key with no request context", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				undefined as unknown as IRequestContext,
+				undefined as unknown as string,
+				undefined as unknown as VaultKeyType,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.objectUndefined",
+			properties: {
+				property: "requestContext",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to add a key with no tenant id", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				{} as unknown as IRequestContext,
+				undefined as unknown as string,
+				undefined as unknown as VaultKeyType,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "requestContext.tenantId",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to add a key with no identity", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				{ tenantId: TEST_TENANT_ID } as unknown as IRequestContext,
+				undefined as unknown as string,
+				undefined as unknown as VaultKeyType,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "requestContext.identity",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to add a key with no key name", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				undefined as unknown as string,
+				undefined as unknown as VaultKeyType,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "name",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to add a key with no key type", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				TEST_KEY_NAME,
+				undefined as unknown as VaultKeyType,
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.arrayOneOf",
+			properties: {
+				property: "type",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to add a key with no private key", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				TEST_KEY_NAME,
+				"Ed25519",
+				undefined as unknown as string,
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "privateKey",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to add a key with no public key", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				TEST_KEY_NAME,
+				"Ed25519",
+				"foo",
+				undefined as unknown as string
+			)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "publicKey",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to add a key if it already exists", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
+				VaultKeyDescriptor,
+				{
+					initialValues: {
+						[TEST_TENANT_ID]: [
+							{
+								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+								type: "Ed25519",
+								privateKey:
+									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							}
+						]
+					}
+				}
+			),
+			vaultSecretEntityStorageConnector
+		});
+
+		await expect(
+			vaultConnector.addKey(
+				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+				TEST_KEY_NAME,
+				"Ed25519",
+				"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+				"v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+			)
+		).rejects.toMatchObject({
+			name: "AlreadyExistsError",
+			properties: {
+				existingId: "test-key"
+			}
+		});
+	});
+
+	test("can add a key", async () => {
+		const vaultConnector = new EntityStorageVaultConnector({
+			vaultKeyEntityStorageConnector,
+			vaultSecretEntityStorageConnector
+		});
+
+		await vaultConnector.addKey(
+			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
+			TEST_KEY_NAME,
+			"Ed25519",
+			"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+			"v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+		);
 
 		const store = vaultKeyEntityStorageConnector.getStore(TEST_TENANT_ID);
 
@@ -337,7 +564,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "keyName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -467,7 +694,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "keyName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -605,7 +832,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "keyName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -771,7 +998,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "keyName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -963,7 +1190,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "keyName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -1153,7 +1380,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "keyName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -1339,7 +1566,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "secretName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -1438,7 +1665,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "secretName",
+				property: "name",
 				value: "undefined"
 			}
 		});
@@ -1564,7 +1791,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "secretName",
+				property: "name",
 				value: "undefined"
 			}
 		});

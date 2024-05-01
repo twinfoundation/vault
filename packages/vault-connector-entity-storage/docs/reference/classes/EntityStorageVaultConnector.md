@@ -28,9 +28,37 @@ Create a new instance of EntityStorageVaultConnector.
 
 ## Methods
 
+### addKey
+
+▸ **addKey**(`requestContext`, `name`, `type`, `privateKey`, `publicKey`): `Promise`\<`void`\>
+
+Add a key to the vault.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `requestContext` | `IRequestContext` | The context for the request. |
+| `name` | `string` | The name of the key to add to the vault. |
+| `type` | ``"Ed25519"`` | The type of key to add. |
+| `privateKey` | `string` | The private key in base64 format. |
+| `publicKey` | `string` | The public key in base64 format. |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+Nothing.
+
+#### Implementation of
+
+IVaultConnector.addKey
+
+___
+
 ### createKey
 
-▸ **createKey**(`requestContext`, `keyName`, `keyType`): `Promise`\<`Uint8Array`\>
+▸ **createKey**(`requestContext`, `name`, `type`): `Promise`\<`Uint8Array`\>
 
 Create a key in the vault.
 
@@ -39,8 +67,8 @@ Create a key in the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `keyName` | `string` | The name of the key to create in the vault. |
-| `keyType` | ``"Ed25519"`` | The type of key to create. |
+| `name` | `string` | The name of the key to create in the vault. |
+| `type` | ``"Ed25519"`` | The type of key to create. |
 
 #### Returns
 
@@ -56,7 +84,7 @@ ___
 
 ### decrypt
 
-▸ **decrypt**(`requestContext`, `keyName`, `encryptionType`, `encryptedData`): `Promise`\<`Uint8Array`\>
+▸ **decrypt**(`requestContext`, `name`, `encryptionType`, `encryptedData`): `Promise`\<`Uint8Array`\>
 
 Decrypt the data using a key in the vault.
 
@@ -65,7 +93,7 @@ Decrypt the data using a key in the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `keyName` | `string` | The name of the key to use for decryption. |
+| `name` | `string` | The name of the key to use for decryption. |
 | `encryptionType` | ``"ChaCha20Poly1305"`` | The type of encryption to use. |
 | `encryptedData` | `Uint8Array` | The data to decrypt. |
 
@@ -83,7 +111,7 @@ ___
 
 ### encrypt
 
-▸ **encrypt**(`requestContext`, `keyName`, `encryptionType`, `data`): `Promise`\<`Uint8Array`\>
+▸ **encrypt**(`requestContext`, `name`, `encryptionType`, `data`): `Promise`\<`Uint8Array`\>
 
 Encrypt the data using a key in the vault.
 
@@ -92,7 +120,7 @@ Encrypt the data using a key in the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `keyName` | `string` | The name of the key to use for encryption. |
+| `name` | `string` | The name of the key to use for encryption. |
 | `encryptionType` | ``"ChaCha20Poly1305"`` | The type of encryption to use. |
 | `data` | `Uint8Array` | The data to encrypt. |
 
@@ -110,7 +138,7 @@ ___
 
 ### getKey
 
-▸ **getKey**(`requestContext`, `keyName`): `Promise`\<\{ `privateKey`: `string` ; `publicKey`: `string` ; `type`: ``"Ed25519"``  }\>
+▸ **getKey**(`requestContext`, `name`): `Promise`\<\{ `privateKey`: `string` ; `publicKey`: `string` ; `type`: ``"Ed25519"``  }\>
 
 Get a key from the vault.
 
@@ -119,7 +147,7 @@ Get a key from the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `keyName` | `string` | The name of the key to get from the vault. |
+| `name` | `string` | The name of the key to get from the vault. |
 
 #### Returns
 
@@ -135,7 +163,7 @@ ___
 
 ### getSecret
 
-▸ **getSecret**\<`T`\>(`requestContext`, `secretName`): `Promise`\<`T`\>
+▸ **getSecret**\<`T`\>(`requestContext`, `name`): `Promise`\<`T`\>
 
 Get a secret from the vault.
 
@@ -150,7 +178,7 @@ Get a secret from the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `secretName` | `string` | The name of the item in the vault to get. |
+| `name` | `string` | The name of the item in the vault to get. |
 
 #### Returns
 
@@ -170,7 +198,7 @@ ___
 
 ### removeKey
 
-▸ **removeKey**(`requestContext`, `keyName`): `Promise`\<`void`\>
+▸ **removeKey**(`requestContext`, `name`): `Promise`\<`void`\>
 
 Remove a key from the vault.
 
@@ -179,7 +207,7 @@ Remove a key from the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `keyName` | `string` | The name of the key to create in the value. |
+| `name` | `string` | The name of the key to create in the value. |
 
 #### Returns
 
@@ -195,7 +223,7 @@ ___
 
 ### removeSecret
 
-▸ **removeSecret**(`requestContext`, `secretName`): `Promise`\<`void`\>
+▸ **removeSecret**(`requestContext`, `name`): `Promise`\<`void`\>
 
 Remove a secret from the vault.
 
@@ -204,7 +232,7 @@ Remove a secret from the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `secretName` | `string` | The name of the item in the vault to remove. |
+| `name` | `string` | The name of the item in the vault to remove. |
 
 #### Returns
 
@@ -224,7 +252,7 @@ ___
 
 ### setSecret
 
-▸ **setSecret**\<`T`\>(`requestContext`, `secretName`, `item`): `Promise`\<`void`\>
+▸ **setSecret**\<`T`\>(`requestContext`, `name`, `item`): `Promise`\<`void`\>
 
 Store a secret in the vault.
 
@@ -239,7 +267,7 @@ Store a secret in the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `secretName` | `string` | The name of the item in the vault to set. |
+| `name` | `string` | The name of the item in the vault to set. |
 | `item` | `T` | The item to add to the vault. |
 
 #### Returns
@@ -256,7 +284,7 @@ ___
 
 ### sign
 
-▸ **sign**(`requestContext`, `keyName`, `data`): `Promise`\<`Uint8Array`\>
+▸ **sign**(`requestContext`, `name`, `data`): `Promise`\<`Uint8Array`\>
 
 Sign the data using a key in the vault.
 
@@ -265,7 +293,7 @@ Sign the data using a key in the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `keyName` | `string` | The name of the key to use for signing. |
+| `name` | `string` | The name of the key to use for signing. |
 | `data` | `Uint8Array` | The data to sign. |
 
 #### Returns
@@ -282,7 +310,7 @@ ___
 
 ### verify
 
-▸ **verify**(`requestContext`, `keyName`, `data`, `signature`): `Promise`\<`boolean`\>
+▸ **verify**(`requestContext`, `name`, `data`, `signature`): `Promise`\<`boolean`\>
 
 Verify the signature of the data using a key in the vault.
 
@@ -291,7 +319,7 @@ Verify the signature of the data using a key in the vault.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `requestContext` | `IRequestContext` | The context for the request. |
-| `keyName` | `string` | The name of the key to use for verification. |
+| `name` | `string` | The name of the key to use for verification. |
 | `data` | `Uint8Array` | The data that was signed. |
 | `signature` | `Uint8Array` | The signature to verify. |
 
