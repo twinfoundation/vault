@@ -73,17 +73,17 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
 			"Ed25519"
 		]);
@@ -138,22 +138,22 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
 			"Ed25519"
 		]);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(privateKey), privateKey);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(publicKey), publicKey);
+		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(privateKey), privateKey);
+		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(publicKey), publicKey);
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -207,17 +207,17 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -251,18 +251,18 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(newName), newName);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(newName), newName);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -294,17 +294,17 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -333,18 +333,18 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -381,19 +381,19 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(signature), signature);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
+		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(signature), signature);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -429,24 +429,24 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultEncryptionType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
 			encryptionType,
 			["ChaCha20Poly1305"]
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
+		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -489,24 +489,28 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultEncryptionType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
 			encryptionType,
 			["ChaCha20Poly1305"]
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(encryptedData), encryptedData);
+		Guards.stringBase64(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(encryptedData),
+			encryptedData
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -541,17 +545,17 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const vaultSecret: IVaultSecret = {
 			id: `${requestContext.identity}/${name}`,
@@ -574,17 +578,17 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const secret = await this._vaultSecretEntityStorageConnector.get(
 			requestContext,
@@ -611,17 +615,17 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			nameof(requestContext),
 			requestContext
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.tenantId),
 			requestContext.tenantId
 		);
-		Guards.string(
+		Guards.stringValue(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext.identity),
 			requestContext.identity
 		);
-		Guards.string(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
+		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
 		const secret = await this._vaultSecretEntityStorageConnector.get(
 			requestContext,

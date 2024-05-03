@@ -401,7 +401,7 @@ describe("EntityStorageVaultConnector", () => {
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.string",
+			message: "guard.base64",
 			properties: {
 				property: "privateKey",
 				value: "undefined"
@@ -420,12 +420,12 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"Ed25519",
-				"foo",
+				"Zm9v",
 				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.string",
+			message: "guard.base64",
 			properties: {
 				property: "publicKey",
 				value: "undefined"
@@ -1018,7 +1018,7 @@ describe("EntityStorageVaultConnector", () => {
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.string",
+			message: "guard.base64",
 			properties: {
 				property: "data",
 				value: "undefined"
@@ -1036,7 +1036,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.sign(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				"foo"
+				"Zm9v"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
@@ -1185,7 +1185,7 @@ describe("EntityStorageVaultConnector", () => {
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.string",
+			message: "guard.base64",
 			properties: {
 				property: "data",
 				value: "undefined"
@@ -1203,12 +1203,12 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				"foo",
+				"Zm9v",
 				undefined as unknown as string
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.string",
+			message: "guard.base64",
 			properties: {
 				property: "signature",
 				value: "undefined"
@@ -1226,8 +1226,8 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.verify(
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
-				"foo",
-				"foo"
+				"Zm9v",
+				"Zm9v"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
@@ -1398,7 +1398,7 @@ describe("EntityStorageVaultConnector", () => {
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.string",
+			message: "guard.base64",
 			properties: {
 				property: "data",
 				value: "undefined"
@@ -1417,7 +1417,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"ChaCha20Poly1305",
-				"foo"
+				"Zm9v"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
@@ -1588,7 +1588,7 @@ describe("EntityStorageVaultConnector", () => {
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.string",
+			message: "guard.base64",
 			properties: {
 				property: "encryptedData",
 				value: "undefined"
@@ -1607,7 +1607,7 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"ChaCha20Poly1305",
-				"foo"
+				"Zm9v"
 			)
 		).rejects.toMatchObject({
 			name: "NotFoundError",
