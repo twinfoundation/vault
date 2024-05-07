@@ -1,7 +1,7 @@
 {
 	"name": "@gtsc/vault",
 	"version": "0.0.3-next.12",
-	"description": "Vault packages for GTSC",
+	"description": "Vault",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/gtscio/vault.git"
