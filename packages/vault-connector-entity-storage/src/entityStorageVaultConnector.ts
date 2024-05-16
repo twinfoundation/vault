@@ -6,8 +6,8 @@ import type { IEntityStorageConnector } from "@gtsc/entity-storage-models";
 import { nameof } from "@gtsc/nameof";
 import type { IRequestContext } from "@gtsc/services";
 import type { IVaultConnector, VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
-import type { IVaultKey } from "./models/IVaultKey";
-import type { IVaultSecret } from "./models/IVaultSecret";
+import type { VaultKey } from "./entities/vaultKey";
+import type { VaultSecret } from "./entities/vaultSecret";
 
 /**
  * Class for performing vault operations in memory.
@@ -23,13 +23,13 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * The entity storage for the vault keys.
 	 * @internal
 	 */
-	private readonly _vaultKeyEntityStorageConnector: IEntityStorageConnector<IVaultKey>;
+	private readonly _vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
 
 	/**
 	 * The entity storage for the vault secrets.
 	 * @internal
 	 */
-	private readonly _vaultSecretEntityStorageConnector: IEntityStorageConnector<IVaultSecret>;
+	private readonly _vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
 
 	/**
 	 * Create a new instance of EntityStorageVaultConnector.
@@ -38,8 +38,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * @param dependencies.vaultSecretEntityStorageConnector The vault secret entity storage connector dependency.
 	 */
 	constructor(dependencies: {
-		vaultKeyEntityStorageConnector: IEntityStorageConnector<IVaultKey>;
-		vaultSecretEntityStorageConnector: IEntityStorageConnector<IVaultSecret>;
+		vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
+		vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
 	}) {
 		Guards.object(EntityStorageVaultConnector._CLASS_NAME, nameof(dependencies), dependencies);
 		Guards.object(
@@ -105,7 +105,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const privateKey = Ed25519.privateKeyFromSeed(seed.slice(0, Ed25519.SEED_SIZE));
 		const publicKey = Ed25519.publicKeyFromPrivateKey(privateKey);
 
-		const vaultKey: IVaultKey = {
+		const vaultKey: VaultKey = {
 			id: `${requestContext.identity}/${name}`,
 			type,
 			privateKey: Converter.bytesToBase64(privateKey),
@@ -167,7 +167,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			);
 		}
 
-		const vaultKey: IVaultKey = {
+		const vaultKey: VaultKey = {
 			id: `${requestContext.identity}/${name}`,
 			type,
 			privateKey,
@@ -557,7 +557,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 
-		const vaultSecret: IVaultSecret = {
+		const vaultSecret: VaultSecret = {
 			id: `${requestContext.identity}/${name}`,
 			data: JSON.stringify(item)
 		};

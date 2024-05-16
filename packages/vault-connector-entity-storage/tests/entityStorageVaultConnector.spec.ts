@@ -1,31 +1,31 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
 import { Converter } from "@gtsc/core";
+import { EntitySchemaHelper } from "@gtsc/entity";
 import { MemoryEntityStorageConnector } from "@gtsc/entity-storage-connector-memory";
 import type { IEntityStorageConnector } from "@gtsc/entity-storage-models";
 import type { IRequestContext } from "@gtsc/services";
 import type { VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
+import { VaultKey } from "../src/entities/vaultKey";
+import { VaultSecret } from "../src/entities/vaultSecret";
 import { EntityStorageVaultConnector } from "../src/entityStorageVaultConnector";
-import type { IVaultKey } from "../src/models/IVaultKey";
-import type { IVaultSecret } from "../src/models/IVaultSecret";
-import { VaultKeyDescriptor } from "../src/models/vaultKeyDescriptor";
-import { VaultSecretDescriptor } from "../src/models/vaultSecretDescriptor";
 
 const TEST_TENANT_ID = "test-tenant";
 const TEST_IDENTITY_ID = "test-identity";
 const TEST_KEY_NAME = "test-key";
 const TEST_SECRET_NAME = "test-secret";
 
-let vaultKeyEntityStorageConnector: MemoryEntityStorageConnector<IVaultKey>;
-let vaultSecretEntityStorageConnector: MemoryEntityStorageConnector<IVaultSecret>;
+let vaultKeyEntityStorageConnector: MemoryEntityStorageConnector<VaultKey>;
+let vaultSecretEntityStorageConnector: MemoryEntityStorageConnector<VaultSecret>;
+
+const vaultKeySchema = EntitySchemaHelper.getSchema(VaultKey);
+const vaultSecretSchema = EntitySchemaHelper.getSchema(VaultSecret);
 
 describe("EntityStorageVaultConnector", () => {
 	beforeEach(() => {
-		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<IVaultKey>(
-			VaultKeyDescriptor
-		);
-		vaultSecretEntityStorageConnector = new MemoryEntityStorageConnector<IVaultSecret>(
-			VaultSecretDescriptor
+		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema);
+		vaultSecretEntityStorageConnector = new MemoryEntityStorageConnector<VaultSecret>(
+			vaultSecretSchema
 		);
 	});
 	test("can fail to construct with no dependencies", async () => {
@@ -33,8 +33,8 @@ describe("EntityStorageVaultConnector", () => {
 			() =>
 				new EntityStorageVaultConnector(
 					undefined as unknown as {
-						vaultKeyEntityStorageConnector: IEntityStorageConnector<IVaultKey>;
-						vaultSecretEntityStorageConnector: IEntityStorageConnector<IVaultSecret>;
+						vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
+						vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
 					}
 				)
 		).toThrow(
@@ -54,8 +54,8 @@ describe("EntityStorageVaultConnector", () => {
 			() =>
 				new EntityStorageVaultConnector(
 					{} as unknown as {
-						vaultKeyEntityStorageConnector: IEntityStorageConnector<IVaultKey>;
-						vaultSecretEntityStorageConnector: IEntityStorageConnector<IVaultSecret>;
+						vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
+						vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
 					}
 				)
 		).toThrow(
@@ -74,8 +74,8 @@ describe("EntityStorageVaultConnector", () => {
 		expect(
 			() =>
 				new EntityStorageVaultConnector({ vaultKeyEntityStorageConnector: {} } as unknown as {
-					vaultKeyEntityStorageConnector: IEntityStorageConnector<IVaultKey>;
-					vaultSecretEntityStorageConnector: IEntityStorageConnector<IVaultSecret>;
+					vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
+					vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
 				})
 		).toThrow(
 			expect.objectContaining({
@@ -210,22 +210,19 @@ describe("EntityStorageVaultConnector", () => {
 
 	test("can fail to create a key if it already exists", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}),
 			vaultSecretEntityStorageConnector
 		});
 
@@ -435,22 +432,19 @@ describe("EntityStorageVaultConnector", () => {
 
 	test("can fail to add a key if it already exists", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}),
 			vaultSecretEntityStorageConnector
 		});
 
@@ -588,22 +582,19 @@ describe("EntityStorageVaultConnector", () => {
 
 	test("can get a key", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}),
 			vaultSecretEntityStorageConnector
 		});
 
@@ -750,22 +741,19 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can rename a key", async () => {
-		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<IVaultKey>(
-			VaultKeyDescriptor,
-			{
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-						}
-					]
-				}
+		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+			initialValues: {
+				[TEST_TENANT_ID]: [
+					{
+						id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+						type: "Ed25519",
+						privateKey:
+							"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+						publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+					}
+				]
 			}
-		);
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
@@ -885,22 +873,19 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can remove a key", async () => {
-		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<IVaultKey>(
-			VaultKeyDescriptor,
-			{
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-						}
-					]
-				}
+		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+			initialValues: {
+				[TEST_TENANT_ID]: [
+					{
+						id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+						type: "Ed25519",
+						privateKey:
+							"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+						publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+					}
+				]
 			}
-		);
+		});
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
 			vaultSecretEntityStorageConnector
@@ -1048,22 +1033,19 @@ describe("EntityStorageVaultConnector", () => {
 
 	test("can sign with a key", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}),
 			vaultSecretEntityStorageConnector
 		});
 
@@ -1239,22 +1221,19 @@ describe("EntityStorageVaultConnector", () => {
 
 	test("can verify with a key", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}),
 			vaultSecretEntityStorageConnector
 		});
 
@@ -1429,22 +1408,19 @@ describe("EntityStorageVaultConnector", () => {
 
 	test("can encrypt with a key", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}),
 			vaultSecretEntityStorageConnector
 		});
 
@@ -1619,22 +1595,19 @@ describe("EntityStorageVaultConnector", () => {
 
 	test("can decrypt with a key", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<IVaultKey>(
-				VaultKeyDescriptor,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-								type: "Ed25519",
-								privateKey:
-									"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-								publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
-							}
-						]
-					}
+			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
+				initialValues: {
+					[TEST_TENANT_ID]: [
+						{
+							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+							type: "Ed25519",
+							privateKey:
+								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
+							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						}
+					]
 				}
-			),
+			}),
 			vaultSecretEntityStorageConnector
 		});
 
@@ -1857,8 +1830,8 @@ describe("EntityStorageVaultConnector", () => {
 	test("can get a secret", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector: new MemoryEntityStorageConnector<IVaultSecret>(
-				VaultSecretDescriptor,
+			vaultSecretEntityStorageConnector: new MemoryEntityStorageConnector<VaultSecret>(
+				vaultSecretSchema,
 				{
 					initialValues: {
 						[TEST_TENANT_ID]: [
@@ -1983,8 +1956,8 @@ describe("EntityStorageVaultConnector", () => {
 	test("can remove a secret", async () => {
 		const vaultConnector = new EntityStorageVaultConnector({
 			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector: new MemoryEntityStorageConnector<IVaultSecret>(
-				VaultSecretDescriptor,
+			vaultSecretEntityStorageConnector: new MemoryEntityStorageConnector<VaultSecret>(
+				vaultSecretSchema,
 				{
 					initialValues: {
 						[TEST_TENANT_ID]: [
