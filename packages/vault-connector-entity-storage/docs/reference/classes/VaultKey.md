@@ -40,6 +40,6 @@ The public key in base64 format.
 
 ### type
 
-> **type**: `"Ed25519"`
+> **type**: `VaultKeyType`
 
-The type of the key e.g. Ed25519.
+The type of the key e.g. Ed25519, Secp256k1.

@@ -1,6 +1,6 @@
 # Class: EntityStorageVaultConnector
 
-Class for performing vault operations in memory.
+Class for performing vault operations in entity storage.
 
 ## Implements
 
@@ -50,7 +50,7 @@ The context for the request.
 
 The name of the key to add to the vault.
 
-• **type**: `"Ed25519"`
+• **type**: `VaultKeyType`
 
 The type of key to add.
 
@@ -90,7 +90,7 @@ The context for the request.
 
 The name of the key to create in the vault.
 
-• **type**: `"Ed25519"`
+• **type**: `VaultKeyType`
 
 The type of key to create.
 
@@ -214,9 +214,9 @@ The public key in base64 format.
 
 ##### type
 
-> **type**: `"Ed25519"`
+> **type**: `VaultKeyType`
 
-The type of the key e.g. Ed25519.
+The type of the key e.g. Ed25519, Secp256k1.
 
 #### Implementation of
 

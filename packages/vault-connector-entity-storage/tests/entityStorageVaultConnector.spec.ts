@@ -216,9 +216,8 @@ describe("EntityStorageVaultConnector", () => {
 						{
 							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 						}
 					]
 				}
@@ -258,7 +257,7 @@ describe("EntityStorageVaultConnector", () => {
 
 		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`);
 		expect(store?.[0].type).toEqual("Ed25519");
-		expect(Converter.base64ToBytes(store?.[0].privateKey ?? "").length).toEqual(64);
+		expect(Converter.base64ToBytes(store?.[0].privateKey ?? "").length).toEqual(32);
 		expect(Converter.base64ToBytes(store?.[0].publicKey ?? "").length).toEqual(32);
 	});
 
@@ -438,9 +437,8 @@ describe("EntityStorageVaultConnector", () => {
 						{
 							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 						}
 					]
 				}
@@ -453,8 +451,8 @@ describe("EntityStorageVaultConnector", () => {
 				{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 				TEST_KEY_NAME,
 				"Ed25519",
-				"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-				"v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+				"vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+				"KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 			)
 		).rejects.toMatchObject({
 			name: "AlreadyExistsError",
@@ -474,15 +472,15 @@ describe("EntityStorageVaultConnector", () => {
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_KEY_NAME,
 			"Ed25519",
-			"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-			"v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+			"vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			"KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		);
 
 		const store = vaultKeyEntityStorageConnector.getStore(TEST_TENANT_ID);
 
 		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`);
 		expect(store?.[0].type).toEqual("Ed25519");
-		expect(Converter.base64ToBytes(store?.[0].privateKey ?? "").length).toEqual(64);
+		expect(Converter.base64ToBytes(store?.[0].privateKey ?? "").length).toEqual(32);
 		expect(Converter.base64ToBytes(store?.[0].publicKey ?? "").length).toEqual(32);
 	});
 
@@ -588,9 +586,8 @@ describe("EntityStorageVaultConnector", () => {
 						{
 							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 						}
 					]
 				}
@@ -604,10 +601,8 @@ describe("EntityStorageVaultConnector", () => {
 		);
 
 		expect(key.type).toEqual("Ed25519");
-		expect(key.privateKey).toEqual(
-			"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ=="
-		);
-		expect(key.publicKey).toEqual("v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU=");
+		expect(key.privateKey).toEqual("vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=");
+		expect(key.publicKey).toEqual("KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y=");
 	});
 
 	test("can fail to rename a key with no request context", async () => {
@@ -747,9 +742,8 @@ describe("EntityStorageVaultConnector", () => {
 					{
 						id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 						type: "Ed25519",
-						privateKey:
-							"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-						publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+						publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 					}
 				]
 			}
@@ -879,9 +873,8 @@ describe("EntityStorageVaultConnector", () => {
 					{
 						id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 						type: "Ed25519",
-						privateKey:
-							"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-						publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+						privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+						publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 					}
 				]
 			}
@@ -1039,9 +1032,8 @@ describe("EntityStorageVaultConnector", () => {
 						{
 							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 						}
 					]
 				}
@@ -1056,7 +1048,7 @@ describe("EntityStorageVaultConnector", () => {
 		);
 
 		expect(signature).toEqual(
-			"xYHh6iMIUHWdAUcgj6ZiAVtpwl03k730MhupevDePA3OrDZ+8GsoVoOC+0MGSm75C1m6cnE9AlTHRcMWnN7rBQ=="
+			"GEuFjhVIS10sF9ocBgbSCwSccgvM+yw30cAOIgD+AVLanSSM+59pw45vkAIszsPhMRd0GMZ/vwjWJHAgFMC0BA=="
 		);
 	});
 
@@ -1227,9 +1219,8 @@ describe("EntityStorageVaultConnector", () => {
 						{
 							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 						}
 					]
 				}
@@ -1241,7 +1232,7 @@ describe("EntityStorageVaultConnector", () => {
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_KEY_NAME,
 			Converter.bytesToBase64(new Uint8Array([1, 2, 3, 4, 5])),
-			"xYHh6iMIUHWdAUcgj6ZiAVtpwl03k730MhupevDePA3OrDZ+8GsoVoOC+0MGSm75C1m6cnE9AlTHRcMWnN7rBQ=="
+			"GEuFjhVIS10sF9ocBgbSCwSccgvM+yw30cAOIgD+AVLanSSM+59pw45vkAIszsPhMRd0GMZ/vwjWJHAgFMC0BA=="
 		);
 
 		expect(verified).toEqual(true);
@@ -1414,9 +1405,8 @@ describe("EntityStorageVaultConnector", () => {
 						{
 							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 						}
 					]
 				}
@@ -1431,7 +1421,7 @@ describe("EntityStorageVaultConnector", () => {
 			Converter.bytesToBase64(new Uint8Array([1, 2, 3, 4, 5]))
 		);
 
-		expect(Converter.base64ToBytes(encrypted).length).toEqual(17);
+		expect(Converter.base64ToBytes(encrypted).length).toEqual(33);
 	});
 
 	test("can fail to decrypt with a key with no request context", async () => {
@@ -1601,9 +1591,8 @@ describe("EntityStorageVaultConnector", () => {
 						{
 							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
 							type: "Ed25519",
-							privateKey:
-								"q61H8fLd9KjrFUOPvr0mEahicyBULexUvE3IA/pBuL2//coUiJ6//lz9Oo+L2XKPttxDQ3nsUGckE4TodvYKVQ==",
-							publicKey: "v/3KFIiev/5c/TqPi9lyj7bcQ0N57FBnJBOE6Hb2ClU="
+							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 						}
 					]
 				}
@@ -1615,7 +1604,7 @@ describe("EntityStorageVaultConnector", () => {
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
 			TEST_KEY_NAME,
 			"ChaCha20Poly1305",
-			"pqyhvnpz5alSH/C7sgPIvkQ="
+			"Q1wjsT0rCM1fPLl+tC6xERiUEI6vk39DyXT6AnZjdeHp"
 		);
 
 		expect(decrypted).toEqual(Converter.bytesToBase64(new Uint8Array([1, 2, 3, 4, 5])));
