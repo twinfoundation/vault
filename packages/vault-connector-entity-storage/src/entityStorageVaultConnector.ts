@@ -1,7 +1,7 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
 import { AlreadyExistsError, Converter, Guards, Is, NotFoundError, RandomHelper } from "@gtsc/core";
-import { Bip39, ChaCha20Poly1305, Ed25519 } from "@gtsc/crypto";
+import { Bip39, ChaCha20Poly1305, Ed25519, Secp256k1 } from "@gtsc/crypto";
 import type { IEntityStorageConnector } from "@gtsc/entity-storage-models";
 import { nameof } from "@gtsc/nameof";
 import type { IRequestContext } from "@gtsc/services";
@@ -10,7 +10,7 @@ import type { VaultKey } from "./entities/vaultKey";
 import type { VaultSecret } from "./entities/vaultSecret";
 
 /**
- * Class for performing vault operations in memory.
+ * Class for performing vault operations in entity storage.
  */
 export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
@@ -85,7 +85,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
-			"Ed25519"
+			"Ed25519",
+			"Secp256k1"
 		]);
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
@@ -102,8 +103,17 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		const mnemonic = Bip39.randomMnemonic();
 		const seed = Bip39.mnemonicToSeed(mnemonic);
-		const privateKey = Ed25519.privateKeyFromSeed(seed.slice(0, Ed25519.SEED_SIZE));
-		const publicKey = Ed25519.publicKeyFromPrivateKey(privateKey);
+
+		let privateKey: Uint8Array;
+		let publicKey: Uint8Array;
+
+		if (type === "Ed25519") {
+			privateKey = seed.slice(0, Ed25519.PRIVATE_KEY_SIZE);
+			publicKey = Ed25519.publicKeyFromPrivateKey(privateKey);
+		} else {
+			privateKey = seed.slice(0, Secp256k1.PRIVATE_KEY_SIZE);
+			publicKey = Secp256k1.publicKeyFromPrivateKey(privateKey);
+		}
 
 		const vaultKey: VaultKey = {
 			id: `${requestContext.identity}/${name}`,
@@ -150,7 +160,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
-			"Ed25519"
+			"Ed25519",
+			"Secp256k1"
 		]);
 		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(privateKey), privateKey);
 		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(publicKey), publicKey);
@@ -188,7 +199,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		name: string
 	): Promise<{
 		/**
-		 * The type of the key e.g. Ed25519.
+		 * The type of the key e.g. Ed25519, Secp256k1.
 		 */
 		type: VaultKeyType;
 
@@ -354,10 +365,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
-		const signatureBytes = Ed25519.sign(
-			Converter.base64ToBytes(vaultKey.privateKey),
-			Converter.base64ToBytes(data)
-		);
+		let signatureBytes;
+		const privateKeyBytes = Converter.base64ToBytes(vaultKey.privateKey);
+		const dataBytes = Converter.base64ToBytes(data);
+		if (vaultKey.type === "Ed25519") {
+			signatureBytes = Ed25519.sign(privateKeyBytes, dataBytes);
+		} else {
+			signatureBytes = Secp256k1.sign(privateKeyBytes, dataBytes);
+		}
 
 		return Converter.bytesToBase64(signatureBytes);
 	}
@@ -403,11 +418,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			throw new NotFoundError(EntityStorageVaultConnector._CLASS_NAME, "keyNotFound", name);
 		}
 
-		return Ed25519.verify(
-			Converter.base64ToBytes(vaultKey.publicKey),
-			Converter.base64ToBytes(data),
-			Converter.base64ToBytes(signature)
-		);
+		const publicKeyBytes = Converter.base64ToBytes(vaultKey.publicKey);
+		const dataBytes = Converter.base64ToBytes(data);
+		const signatureBytes = Converter.base64ToBytes(signature);
+
+		if (vaultKey.type === "Ed25519") {
+			return Ed25519.verify(publicKeyBytes, dataBytes, signatureBytes);
+		}
+		return Secp256k1.verify(publicKeyBytes, dataBytes, signatureBytes);
 	}
 
 	/**
@@ -460,8 +478,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		const nonce = RandomHelper.generate(12);
 
-		const cipher = ChaCha20Poly1305.encryptor(privateKey, nonce);
-		const payload = cipher.update(Converter.base64ToBytes(data));
+		const cipher = new ChaCha20Poly1305(privateKey, nonce);
+		const payload = cipher.encrypt(Converter.base64ToBytes(data));
 
 		const encryptedBytes = new Uint8Array(nonce.length + payload.length);
 		encryptedBytes.set(nonce);
@@ -526,8 +544,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		const nonce = encryptedBytes.slice(0, 12);
 
-		const decipher = ChaCha20Poly1305.decryptor(privateKey, nonce);
-		const decryptedBytes = decipher.update(encryptedBytes.slice(nonce.length));
+		const cipher = new ChaCha20Poly1305(privateKey, nonce);
+		const decryptedBytes = cipher.decrypt(encryptedBytes.slice(nonce.length));
 
 		return Converter.bytesToBase64(decryptedBytes);
 	}

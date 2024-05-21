@@ -45,7 +45,7 @@ export interface IVaultConnector extends IService {
 		name: string
 	): Promise<{
 		/**
-		 * The type of the key e.g. Ed25519.
+		 * The type of the key e.g. Ed25519, Secp256k1.
 		 */
 		type: VaultKeyType;
 
