@@ -42,12 +42,12 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
 	}) {
 		Guards.object(EntityStorageVaultConnector._CLASS_NAME, nameof(dependencies), dependencies);
-		Guards.object(
+		Guards.object<IEntityStorageConnector<VaultKey>>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(dependencies.vaultKeyEntityStorageConnector),
 			dependencies.vaultKeyEntityStorageConnector
 		);
-		Guards.object(
+		Guards.object<IEntityStorageConnector<VaultSecret>>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(dependencies.vaultSecretEntityStorageConnector),
 			dependencies.vaultSecretEntityStorageConnector
