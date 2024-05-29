@@ -18,7 +18,7 @@ export class VaultKey {
 	/**
 	 * The type of the key e.g. Ed25519, Secp256k1.
 	 */
-	@property({ type: "string" })
+	@property({ type: "number" })
 	public type!: VaultKeyType;
 
 	/**

@@ -13,25 +13,25 @@ export interface IVaultConnector extends IService {
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to create in the vault.
 	 * @param type The type of key to create.
-	 * @returns The public key for the key pair in base64.
+	 * @returns The public key for the key pair.
 	 */
-	createKey(requestContext: IRequestContext, name: string, type: VaultKeyType): Promise<string>;
+	createKey(requestContext: IRequestContext, name: string, type: VaultKeyType): Promise<Uint8Array>;
 
 	/**
 	 * Add a key to the vault.
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to add to the vault.
 	 * @param type The type of key to add.
-	 * @param privateKey The private key in base64 format.
-	 * @param publicKey The public key in base64 format.
+	 * @param privateKey The private key.
+	 * @param publicKey The public key.
 	 * @returns Nothing.
 	 */
 	addKey(
 		requestContext: IRequestContext,
 		name: string,
 		type: VaultKeyType,
-		privateKey: string,
-		publicKey: string
+		privateKey: Uint8Array,
+		publicKey: Uint8Array
 	): Promise<void>;
 
 	/**
@@ -50,14 +50,14 @@ export interface IVaultConnector extends IService {
 		type: VaultKeyType;
 
 		/**
-		 * The private key in base64 format.
+		 * The private key.
 		 */
-		privateKey: string;
+		privateKey: Uint8Array;
 
 		/**
-		 * The public key in base64 format.
+		 * The public key.
 		 */
-		publicKey: string;
+		publicKey: Uint8Array;
 	}>;
 
 	/**
@@ -81,24 +81,24 @@ export interface IVaultConnector extends IService {
 	 * Sign the data using a key in the vault.
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to use for signing.
-	 * @param data The data to sign in base64 form.
-	 * @returns The signature for the data in base64 form.
+	 * @param data The data to sign.
+	 * @returns The signature for the data.
 	 */
-	sign(requestContext: IRequestContext, name: string, data: string): Promise<string>;
+	sign(requestContext: IRequestContext, name: string, data: Uint8Array): Promise<Uint8Array>;
 
 	/**
 	 * Verify the signature of the data using a key in the vault.
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to use for verification.
-	 * @param data The data that was signed in base64 form.
-	 * @param signature The signature to verify in base64 form.
+	 * @param data The data that was signed.
+	 * @param signature The signature to verify.
 	 * @returns True if the verification is successful.
 	 */
 	verify(
 		requestContext: IRequestContext,
 		name: string,
-		data: string,
-		signature: string
+		data: Uint8Array,
+		signature: Uint8Array
 	): Promise<boolean>;
 
 	/**
@@ -106,30 +106,30 @@ export interface IVaultConnector extends IService {
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to use for encryption.
 	 * @param encryptionType The type of encryption to use.
-	 * @param data The data to encrypt in base64 form.
-	 * @returns The encrypted data in base64.
+	 * @param data The data to encrypt.
+	 * @returns The encrypted data.
 	 */
 	encrypt(
 		requestContext: IRequestContext,
 		name: string,
 		encryptionType: VaultEncryptionType,
-		data: string
-	): Promise<string>;
+		data: Uint8Array
+	): Promise<Uint8Array>;
 
 	/**
 	 * Decrypt the data using a key in the vault.
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to use for decryption.
 	 * @param encryptionType The type of encryption to use.
-	 * @param encryptedData The data to decrypt in base64.
-	 * @returns The decrypted data in base64.
+	 * @param encryptedData The data to decrypt.
+	 * @returns The decrypted data.
 	 */
 	decrypt(
 		requestContext: IRequestContext,
 		name: string,
 		encryptionType: VaultEncryptionType,
-		encryptedData: string
-	): Promise<string>;
+		encryptedData: Uint8Array
+	): Promise<Uint8Array>;
 
 	/**
 	 * Store a secret in the vault.

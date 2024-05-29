@@ -3,4 +3,14 @@
 /**
  * The types of keys that can be created in the vault.
  */
-export type VaultKeyType = "Ed25519" | "Secp256k1";
+export enum VaultKeyType {
+	/**
+	 * The Ed25519 key type.
+	 */
+	Ed25519 = 0,
+
+	/**
+	 * The Secp256k1 key type.
+	 */
+	Secp256k1 = 1
+}
