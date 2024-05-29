@@ -84,7 +84,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf(
+		Guards.arrayOneOf<VaultKeyType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(type),
 			type,
@@ -161,7 +161,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf(
+		Guards.arrayOneOf<VaultKeyType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(type),
 			type,
@@ -463,7 +463,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf(
+		Guards.arrayOneOf<VaultEncryptionType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
 			encryptionType,
@@ -523,7 +523,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf(
+		Guards.arrayOneOf<VaultEncryptionType>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
 			encryptionType,

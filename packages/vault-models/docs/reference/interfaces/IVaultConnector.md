@@ -84,7 +84,7 @@ The context for the request.
 
 The name of the key to create in the vault.
 
-• **type**: [`VaultKeyType`](../enumerations/VaultKeyType.md)
+• **type**: [`VaultKeyType`](../type-aliases/VaultKeyType.md)
 
 The type of key to create.
 
@@ -112,7 +112,7 @@ The context for the request.
 
 The name of the key to add to the vault.
 
-• **type**: [`VaultKeyType`](../enumerations/VaultKeyType.md)
+• **type**: [`VaultKeyType`](../type-aliases/VaultKeyType.md)
 
 The type of key to add.
 
@@ -156,7 +156,7 @@ The key.
 
 ##### type
 
-> **type**: [`VaultKeyType`](../enumerations/VaultKeyType.md)
+> **type**: [`VaultKeyType`](../type-aliases/VaultKeyType.md)
 
 The type of the key e.g. Ed25519, Secp256k1.
 
@@ -302,7 +302,7 @@ The context for the request.
 
 The name of the key to use for encryption.
 
-• **encryptionType**: [`ChaCha20Poly1305`](../enumerations/VaultEncryptionType.md#chacha20poly1305)
+• **encryptionType**: `0`
 
 The type of encryption to use.
 
@@ -334,7 +334,7 @@ The context for the request.
 
 The name of the key to use for decryption.
 
-• **encryptionType**: [`ChaCha20Poly1305`](../enumerations/VaultEncryptionType.md#chacha20poly1305)
+• **encryptionType**: `0`
 
 The type of encryption to use.
 

@@ -296,7 +296,7 @@ The context for the request.
 
 The name of the key to use for encryption.
 
-• **encryptionType**: `ChaCha20Poly1305`
+• **encryptionType**: `0`
 
 The type of encryption to use.
 
@@ -332,7 +332,7 @@ The context for the request.
 
 The name of the key to use for decryption.
 
-• **encryptionType**: `ChaCha20Poly1305`
+• **encryptionType**: `0`
 
 The type of encryption to use.
 
