@@ -5,7 +5,7 @@ import { Bip39, ChaCha20Poly1305, Ed25519, Secp256k1 } from "@gtsc/crypto";
 import type { IEntityStorageConnector } from "@gtsc/entity-storage-models";
 import { nameof } from "@gtsc/nameof";
 import type { IRequestContext } from "@gtsc/services";
-import type { IVaultConnector, VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
+import { type IVaultConnector, VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
 import type { VaultKey } from "./entities/vaultKey";
 import type { VaultSecret } from "./entities/vaultSecret";
 
@@ -61,13 +61,13 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to create in the vault.
 	 * @param type The type of key to create.
-	 * @returns The public key for the key pair in base64.
+	 * @returns The public key for the key pair.
 	 */
 	public async createKey(
 		requestContext: IRequestContext,
 		name: string,
 		type: VaultKeyType
-	): Promise<string> {
+	): Promise<Uint8Array> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -84,10 +84,12 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
-			"Ed25519",
-			"Secp256k1"
-		]);
+		Guards.arrayOneOf(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(type),
+			type,
+			Object.values(VaultKeyType)
+		);
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -107,7 +109,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		let privateKey: Uint8Array;
 		let publicKey: Uint8Array;
 
-		if (type === "Ed25519") {
+		if (type === VaultKeyType.Ed25519) {
 			privateKey = seed.slice(0, Ed25519.PRIVATE_KEY_SIZE);
 			publicKey = Ed25519.publicKeyFromPrivateKey(privateKey);
 		} else {
@@ -124,7 +126,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		await this._vaultKeyEntityStorageConnector.set(requestContext, vaultKey);
 
-		return Converter.bytesToBase64(publicKey);
+		return publicKey;
 	}
 
 	/**
@@ -132,16 +134,16 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to add to the vault.
 	 * @param type The type of key to add.
-	 * @param privateKey The private key in base64 format.
-	 * @param publicKey The public key in base64 format.
+	 * @param privateKey The private key.
+	 * @param publicKey The public key.
 	 * @returns Nothing.
 	 */
 	public async addKey(
 		requestContext: IRequestContext,
 		name: string,
 		type: VaultKeyType,
-		privateKey: string,
-		publicKey: string
+		privateKey: Uint8Array,
+		publicKey: Uint8Array
 	): Promise<void> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
@@ -159,12 +161,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf<VaultKeyType>(EntityStorageVaultConnector._CLASS_NAME, nameof(type), type, [
-			"Ed25519",
-			"Secp256k1"
-		]);
-		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(privateKey), privateKey);
-		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(publicKey), publicKey);
+		Guards.arrayOneOf(
+			EntityStorageVaultConnector._CLASS_NAME,
+			nameof(type),
+			type,
+			Object.values(VaultKeyType)
+		);
+		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(privateKey), privateKey);
+		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(publicKey), publicKey);
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -181,8 +185,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const vaultKey: VaultKey = {
 			id: `${requestContext.identity}/${name}`,
 			type,
-			privateKey,
-			publicKey
+			privateKey: Converter.bytesToBase64(privateKey),
+			publicKey: Converter.bytesToBase64(publicKey)
 		};
 
 		await this._vaultKeyEntityStorageConnector.set(requestContext, vaultKey);
@@ -204,14 +208,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		type: VaultKeyType;
 
 		/**
-		 * The private key in base64 format.
+		 * The private key.
 		 */
-		privateKey: string;
+		privateKey: Uint8Array;
 
 		/**
-		 * The public key in base64 format.
+		 * The public key.
 		 */
-		publicKey: string;
+		publicKey: Uint8Array;
 	}> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
@@ -240,8 +244,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		return {
 			type: vaultKey.type,
-			privateKey: vaultKey.privateKey,
-			publicKey: vaultKey.publicKey
+			privateKey: Converter.base64ToBytes(vaultKey.privateKey),
+			publicKey: Converter.base64ToBytes(vaultKey.publicKey)
 		};
 	}
 
@@ -335,10 +339,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * Sign the data using a key in the vault.
 	 * @param requestContext The context for the request.
 	 * @param name The name of the key to use for signing.
-	 * @param data The data to sign in base64.
-	 * @returns The signature for the data in base64.
+	 * @param data The data to sign.
+	 * @returns The signature for the data.
 	 */
-	public async sign(requestContext: IRequestContext, name: string, data: string): Promise<string> {
+	public async sign(
+		requestContext: IRequestContext,
+		name: string,
+		data: Uint8Array
+	): Promise<Uint8Array> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -355,7 +363,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
+		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -367,14 +375,13 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		let signatureBytes;
 		const privateKeyBytes = Converter.base64ToBytes(vaultKey.privateKey);
-		const dataBytes = Converter.base64ToBytes(data);
-		if (vaultKey.type === "Ed25519") {
-			signatureBytes = Ed25519.sign(privateKeyBytes, dataBytes);
+		if (vaultKey.type === VaultKeyType.Ed25519) {
+			signatureBytes = Ed25519.sign(privateKeyBytes, data);
 		} else {
-			signatureBytes = Secp256k1.sign(privateKeyBytes, dataBytes);
+			signatureBytes = Secp256k1.sign(privateKeyBytes, data);
 		}
 
-		return Converter.bytesToBase64(signatureBytes);
+		return signatureBytes;
 	}
 
 	/**
@@ -388,8 +395,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	public async verify(
 		requestContext: IRequestContext,
 		name: string,
-		data: string,
-		signature: string
+		data: Uint8Array,
+		signature: Uint8Array
 	): Promise<boolean> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
@@ -407,8 +414,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
-		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(signature), signature);
+		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
+		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(signature), signature);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -419,13 +426,11 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		}
 
 		const publicKeyBytes = Converter.base64ToBytes(vaultKey.publicKey);
-		const dataBytes = Converter.base64ToBytes(data);
-		const signatureBytes = Converter.base64ToBytes(signature);
 
-		if (vaultKey.type === "Ed25519") {
-			return Ed25519.verify(publicKeyBytes, dataBytes, signatureBytes);
+		if (vaultKey.type === VaultKeyType.Ed25519) {
+			return Ed25519.verify(publicKeyBytes, data, signature);
 		}
-		return Secp256k1.verify(publicKeyBytes, dataBytes, signatureBytes);
+		return Secp256k1.verify(publicKeyBytes, data, signature);
 	}
 
 	/**
@@ -440,8 +445,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		requestContext: IRequestContext,
 		name: string,
 		encryptionType: VaultEncryptionType,
-		data: string
-	): Promise<string> {
+		data: Uint8Array
+	): Promise<Uint8Array> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -458,13 +463,13 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf<VaultEncryptionType>(
+		Guards.arrayOneOf(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
 			encryptionType,
-			["ChaCha20Poly1305"]
+			Object.values(VaultEncryptionType)
 		);
-		Guards.stringBase64(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
+		Guards.uint8Array(EntityStorageVaultConnector._CLASS_NAME, nameof(data), data);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
 			requestContext,
@@ -479,13 +484,13 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const nonce = RandomHelper.generate(12);
 
 		const cipher = new ChaCha20Poly1305(privateKey, nonce);
-		const payload = cipher.encrypt(Converter.base64ToBytes(data));
+		const payload = cipher.encrypt(data);
 
 		const encryptedBytes = new Uint8Array(nonce.length + payload.length);
 		encryptedBytes.set(nonce);
 		encryptedBytes.set(payload, nonce.length);
 
-		return Converter.bytesToBase64(encryptedBytes);
+		return encryptedBytes;
 	}
 
 	/**
@@ -500,8 +505,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		requestContext: IRequestContext,
 		name: string,
 		encryptionType: VaultEncryptionType,
-		encryptedData: string
-	): Promise<string> {
+		encryptedData: Uint8Array
+	): Promise<Uint8Array> {
 		Guards.object<IRequestContext>(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(requestContext),
@@ -518,13 +523,13 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			requestContext.identity
 		);
 		Guards.stringValue(EntityStorageVaultConnector._CLASS_NAME, nameof(name), name);
-		Guards.arrayOneOf<VaultEncryptionType>(
+		Guards.arrayOneOf(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptionType),
 			encryptionType,
-			["ChaCha20Poly1305"]
+			Object.values(VaultEncryptionType)
 		);
-		Guards.stringBase64(
+		Guards.uint8Array(
 			EntityStorageVaultConnector._CLASS_NAME,
 			nameof(encryptedData),
 			encryptedData
@@ -540,14 +545,12 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		const privateKey = Converter.base64ToBytes(vaultKey.privateKey);
 
-		const encryptedBytes = Converter.base64ToBytes(encryptedData);
-
-		const nonce = encryptedBytes.slice(0, 12);
+		const nonce = encryptedData.slice(0, 12);
 
 		const cipher = new ChaCha20Poly1305(privateKey, nonce);
-		const decryptedBytes = cipher.decrypt(encryptedBytes.slice(nonce.length));
+		const decryptedBytes = cipher.decrypt(encryptedData.slice(nonce.length));
 
-		return Converter.bytesToBase64(decryptedBytes);
+		return decryptedBytes;
 	}
 
 	/**
