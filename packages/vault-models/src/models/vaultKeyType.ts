@@ -1,16 +1,23 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
+
 /**
- * The types of keys that can be created in the vault.
+ * The names of the vault key types.
  */
-export enum VaultKeyType {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const VaultKeyType = {
 	/**
-	 * The Ed25519 key type.
+	 * Ed25519.
 	 */
-	Ed25519 = 0,
+	Ed25519: 0,
 
 	/**
-	 * The Secp256k1 key type.
+	 * Secp256k1.
 	 */
-	Secp256k1 = 1
-}
+	Secp256k1: 1
+} as const;
+
+/**
+ * Vault key types.
+ */
+export type VaultKeyType = (typeof VaultKeyType)[keyof typeof VaultKeyType];
