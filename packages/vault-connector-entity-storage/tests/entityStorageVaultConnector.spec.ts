@@ -1,9 +1,10 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
 import { Converter } from "@gtsc/core";
-import { EntitySchemaHelper } from "@gtsc/entity";
+import { EntitySchemaFactory, EntitySchemaHelper } from "@gtsc/entity";
 import { MemoryEntityStorageConnector } from "@gtsc/entity-storage-connector-memory";
-import type { IEntityStorageConnector } from "@gtsc/entity-storage-models";
+import { EntityStorageConnectorFactory } from "@gtsc/entity-storage-models";
+import { nameof } from "@gtsc/nameof";
 import type { IRequestContext } from "@gtsc/services";
 import { VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
 import { VaultKey } from "../src/entities/vaultKey";
@@ -14,95 +15,44 @@ const TEST_TENANT_ID = "test-tenant";
 const TEST_IDENTITY_ID = "test-identity";
 const TEST_KEY_NAME = "test-key";
 const TEST_SECRET_NAME = "test-secret";
+const TEST_CONTEXT = { tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID };
 
 let vaultKeyEntityStorageConnector: MemoryEntityStorageConnector<VaultKey>;
 let vaultSecretEntityStorageConnector: MemoryEntityStorageConnector<VaultSecret>;
 
-const vaultKeySchema = EntitySchemaHelper.getSchema(VaultKey);
-const vaultSecretSchema = EntitySchemaHelper.getSchema(VaultSecret);
-
 describe("EntityStorageVaultConnector", () => {
+	beforeAll(() => {
+		EntitySchemaFactory.register(nameof<VaultKey>(), () => EntitySchemaHelper.getSchema(VaultKey));
+		EntitySchemaFactory.register(nameof<VaultSecret>(), () =>
+			EntitySchemaHelper.getSchema(VaultSecret)
+		);
+	});
+
 	beforeEach(() => {
-		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema);
-		vaultSecretEntityStorageConnector = new MemoryEntityStorageConnector<VaultSecret>(
-			vaultSecretSchema
-		);
-	});
-	test("can fail to construct with no dependencies", async () => {
-		expect(
-			() =>
-				new EntityStorageVaultConnector(
-					undefined as unknown as {
-						vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
-						vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
-					}
-				)
-		).toThrow(
-			expect.objectContaining({
-				name: "GuardError",
-				message: "guard.objectUndefined",
-				properties: {
-					property: "dependencies",
-					value: "undefined"
-				}
-			})
-		);
+		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>({
+			entitySchema: nameof(VaultKey)
+		});
+		vaultSecretEntityStorageConnector = new MemoryEntityStorageConnector<VaultSecret>({
+			entitySchema: nameof(VaultSecret)
+		});
+
+		EntityStorageConnectorFactory.register("vault-key", () => vaultKeyEntityStorageConnector);
+		EntityStorageConnectorFactory.register("vault-secret", () => vaultSecretEntityStorageConnector);
 	});
 
-	test("can fail to construct with no vault key entity storage", async () => {
-		expect(
-			() =>
-				new EntityStorageVaultConnector(
-					{} as unknown as {
-						vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
-						vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
-					}
-				)
-		).toThrow(
-			expect.objectContaining({
-				name: "GuardError",
-				message: "guard.objectUndefined",
-				properties: {
-					property: "dependencies.vaultKeyEntityStorageConnector",
-					value: "undefined"
-				}
-			})
-		);
-	});
-
-	test("can fail to construct with no vault secret entity storage", async () => {
-		expect(
-			() =>
-				new EntityStorageVaultConnector({ vaultKeyEntityStorageConnector: {} } as unknown as {
-					vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
-					vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
-				})
-		).toThrow(
-			expect.objectContaining({
-				name: "GuardError",
-				message: "guard.objectUndefined",
-				properties: {
-					property: "dependencies.vaultSecretEntityStorageConnector",
-					value: "undefined"
-				}
-			})
-		);
+	afterEach(() => {
+		EntityStorageConnectorFactory.unregister("vault-key");
+		EntityStorageConnectorFactory.unregister("vault-secret");
 	});
 
 	test("can construct with dependencies", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		expect(vaultConnector).toBeDefined();
 	});
 
 	test("can fail to create a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.createKey(
@@ -121,10 +71,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to create a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.createKey(
@@ -143,10 +90,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to create a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.createKey(
@@ -165,10 +109,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to create a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.createKey(
@@ -187,10 +128,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to create a key with no key type", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.createKey(
@@ -209,21 +147,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to create a key if it already exists", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: VaultKeyType.Ed25519,
-							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-						}
-					]
-				}
-			}),
-			vaultSecretEntityStorageConnector
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.createKey(
@@ -240,10 +171,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can create a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		const key = await vaultConnector.createKey(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -262,10 +190,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -286,10 +211,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -310,10 +232,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -334,10 +253,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -358,10 +274,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key with no key type", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -382,10 +295,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key with no private key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -406,10 +316,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key with no public key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -430,21 +337,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to add a key if it already exists", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: VaultKeyType.Ed25519,
-							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-						}
-					]
-				}
-			}),
-			vaultSecretEntityStorageConnector
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.addKey(
@@ -463,10 +363,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can add a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await vaultConnector.addKey(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -485,10 +382,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getKey(undefined as unknown as IRequestContext, undefined as unknown as string)
@@ -503,10 +397,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getKey({} as unknown as IRequestContext, undefined as unknown as string)
@@ -521,10 +412,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getKey(
@@ -542,10 +430,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getKey(
@@ -563,10 +448,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a key if it doesn't exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getKey({ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID }, TEST_KEY_NAME)
@@ -579,21 +461,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can get a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: VaultKeyType.Ed25519,
-							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-						}
-					]
-				}
-			}),
-			vaultSecretEntityStorageConnector
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		const key = await vaultConnector.getKey(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -610,10 +485,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to rename a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.renameKey(
@@ -632,10 +504,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to rename a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.renameKey(
@@ -654,10 +523,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to rename a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.renameKey(
@@ -676,10 +542,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to rename a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.renameKey(
@@ -698,10 +561,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to rename a key with no new key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.renameKey(
@@ -720,10 +580,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to rename a key if it doesn't exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.renameKey(
@@ -740,23 +597,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can rename a key", async () => {
-		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-			initialValues: {
-				[TEST_TENANT_ID]: [
-					{
-						id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-						type: VaultKeyType.Ed25519,
-						privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-						publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-					}
-				]
-			}
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
 
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await vaultConnector.renameKey(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -771,10 +619,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeKey(
@@ -792,10 +637,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeKey({} as unknown as IRequestContext, undefined as unknown as string)
@@ -810,10 +652,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeKey(
@@ -831,10 +670,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeKey(
@@ -852,10 +688,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a key if it doesn't exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeKey(
@@ -871,22 +704,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can remove a key", async () => {
-		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-			initialValues: {
-				[TEST_TENANT_ID]: [
-					{
-						id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-						type: VaultKeyType.Ed25519,
-						privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-						publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-					}
-				]
-			}
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await vaultConnector.removeKey(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -899,10 +724,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to sign with a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.sign(
@@ -921,10 +743,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to sign with a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.sign(
@@ -943,10 +762,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to sign with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.sign(
@@ -965,10 +781,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to sign with a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.sign(
@@ -987,10 +800,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to sign with a key with no data", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.sign(
@@ -1009,10 +819,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to sign with a key if it doesn't exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.sign(
@@ -1029,21 +836,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can sign with a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: VaultKeyType.Ed25519,
-							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-						}
-					]
-				}
-			}),
-			vaultSecretEntityStorageConnector
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		const signature = await vaultConnector.sign(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -1059,10 +859,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to verify with a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.verify(
@@ -1082,10 +879,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to verify with a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.verify(
@@ -1105,10 +899,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to verify with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.verify(
@@ -1128,10 +919,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to verify with a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.verify(
@@ -1151,10 +939,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to verify with a key with no data", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.verify(
@@ -1174,10 +959,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to verify with a key with no signature", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.verify(
@@ -1197,10 +979,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to verify with a key if it doesn't exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.verify(
@@ -1218,21 +997,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can verify with a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: VaultKeyType.Ed25519,
-							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-						}
-					]
-				}
-			}),
-			vaultSecretEntityStorageConnector
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		const verified = await vaultConnector.verify(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -1247,10 +1019,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to encrypt with a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.encrypt(
@@ -1270,10 +1039,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to encrypt with a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.encrypt(
@@ -1293,10 +1059,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to encrypt with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.encrypt(
@@ -1316,10 +1079,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to encrypt with a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.encrypt(
@@ -1339,10 +1099,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to encrypt with a key with no encryption type", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.encrypt(
@@ -1362,10 +1119,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to encrypt with a key with no data", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.encrypt(
@@ -1385,10 +1139,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to encrypt with a key if it doesn't exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.encrypt(
@@ -1406,21 +1157,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can encrypt with a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: VaultKeyType.Ed25519,
-							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-						}
-					]
-				}
-			}),
-			vaultSecretEntityStorageConnector
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		const encrypted = await vaultConnector.encrypt(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -1433,10 +1177,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to decrypt with a key with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.decrypt(
@@ -1456,10 +1197,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to decrypt with a key with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.decrypt(
@@ -1479,10 +1217,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to decrypt with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.decrypt(
@@ -1502,10 +1237,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to decrypt with a key with no key name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.decrypt(
@@ -1525,10 +1257,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to decrypt with a key with no encryption type", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.decrypt(
@@ -1548,10 +1277,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to decrypt with a key with no data", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.decrypt(
@@ -1571,10 +1297,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to decrypt with a key if it doesn't exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.decrypt(
@@ -1592,21 +1315,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can decrypt with a key", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector: new MemoryEntityStorageConnector<VaultKey>(vaultKeySchema, {
-				initialValues: {
-					[TEST_TENANT_ID]: [
-						{
-							id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-							type: VaultKeyType.Ed25519,
-							privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-							publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-						}
-					]
-				}
-			}),
-			vaultSecretEntityStorageConnector
+		await vaultKeyEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		const decrypted = await vaultConnector.decrypt(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -1619,10 +1335,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to store a secret with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.setSecret(
@@ -1641,10 +1354,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to store a secret with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.setSecret(
@@ -1663,10 +1373,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to store a secret with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.setSecret(
@@ -1685,10 +1392,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to store a secret with no secret name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.setSecret(
@@ -1707,10 +1411,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can store a secret", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await vaultConnector.setSecret(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -1725,10 +1426,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a secret with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getSecret(
@@ -1746,10 +1444,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a secret with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getSecret({} as unknown as IRequestContext, undefined as unknown as string)
@@ -1764,10 +1459,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a secret with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getSecret(
@@ -1785,10 +1477,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a secret with no secret name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getSecret(
@@ -1806,10 +1495,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to get a secret that does not exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.getSecret(
@@ -1825,22 +1511,12 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can get a secret", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector: new MemoryEntityStorageConnector<VaultSecret>(
-				vaultSecretSchema,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
-								data: JSON.stringify({ foo: "bar" })
-							}
-						]
-					}
-				}
-			)
+		await vaultSecretEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
+			data: JSON.stringify({ foo: "bar" })
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		const secret = await vaultConnector.getSecret(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },
@@ -1851,10 +1527,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a secret with no request context", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeSecret(
@@ -1872,10 +1545,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a secret with no tenant id", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeSecret({} as unknown as IRequestContext, undefined as unknown as string)
@@ -1890,10 +1560,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a secret with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeSecret(
@@ -1911,10 +1578,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a secret with no secret name", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeSecret(
@@ -1932,10 +1596,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can fail to remove a secret that does not exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector
-		});
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
 			vaultConnector.removeSecret(
@@ -1951,22 +1612,12 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can remove a secret", async () => {
-		const vaultConnector = new EntityStorageVaultConnector({
-			vaultKeyEntityStorageConnector,
-			vaultSecretEntityStorageConnector: new MemoryEntityStorageConnector<VaultSecret>(
-				vaultSecretSchema,
-				{
-					initialValues: {
-						[TEST_TENANT_ID]: [
-							{
-								id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
-								data: JSON.stringify({ foo: "bar" })
-							}
-						]
-					}
-				}
-			)
+		await vaultSecretEntityStorageConnector.set(TEST_CONTEXT, {
+			id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
+			data: JSON.stringify({ foo: "bar" })
 		});
+
+		const vaultConnector = new EntityStorageVaultConnector();
 
 		await vaultConnector.removeSecret(
 			{ tenantId: TEST_TENANT_ID, identity: TEST_IDENTITY_ID },

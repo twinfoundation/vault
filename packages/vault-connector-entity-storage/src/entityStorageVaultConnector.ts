@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0.
 import { AlreadyExistsError, Converter, Guards, Is, NotFoundError, RandomHelper } from "@gtsc/core";
 import { Bip39, ChaCha20Poly1305, Ed25519, Secp256k1 } from "@gtsc/crypto";
-import type { IEntityStorageConnector } from "@gtsc/entity-storage-models";
+import {
+	EntityStorageConnectorFactory,
+	type IEntityStorageConnector
+} from "@gtsc/entity-storage-models";
 import { nameof } from "@gtsc/nameof";
 import type { IRequestContext } from "@gtsc/services";
 import { type IVaultConnector, VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
@@ -33,27 +36,20 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 	/**
 	 * Create a new instance of EntityStorageVaultConnector.
-	 * @param dependencies The dependencies for the logging connector.
-	 * @param dependencies.vaultKeyEntityStorageConnector The vault key entity storage connector dependency.
-	 * @param dependencies.vaultSecretEntityStorageConnector The vault secret entity storage connector dependency.
+	 * @param options The options for the connector.
+	 * @param options.vaultKeyEntityStorageType The vault key entity storage connector type, defaults to "vault-key".
+	 * @param options.vaultSecretEntityStorageType The vault secret entity storage connector type, defaults to "vault-secret".
 	 */
-	constructor(dependencies: {
-		vaultKeyEntityStorageConnector: IEntityStorageConnector<VaultKey>;
-		vaultSecretEntityStorageConnector: IEntityStorageConnector<VaultSecret>;
+	constructor(options?: {
+		vaultKeyEntityStorageType?: string;
+		vaultSecretEntityStorageType?: string;
 	}) {
-		Guards.object(EntityStorageVaultConnector._CLASS_NAME, nameof(dependencies), dependencies);
-		Guards.object<IEntityStorageConnector<VaultKey>>(
-			EntityStorageVaultConnector._CLASS_NAME,
-			nameof(dependencies.vaultKeyEntityStorageConnector),
-			dependencies.vaultKeyEntityStorageConnector
+		this._vaultKeyEntityStorageConnector = EntityStorageConnectorFactory.get(
+			options?.vaultKeyEntityStorageType ?? "vault-key"
 		);
-		Guards.object<IEntityStorageConnector<VaultSecret>>(
-			EntityStorageVaultConnector._CLASS_NAME,
-			nameof(dependencies.vaultSecretEntityStorageConnector),
-			dependencies.vaultSecretEntityStorageConnector
+		this._vaultSecretEntityStorageConnector = EntityStorageConnectorFactory.get(
+			options?.vaultSecretEntityStorageType ?? "vault-secret"
 		);
-		this._vaultKeyEntityStorageConnector = dependencies.vaultKeyEntityStorageConnector;
-		this._vaultSecretEntityStorageConnector = dependencies.vaultSecretEntityStorageConnector;
 	}
 
 	/**
