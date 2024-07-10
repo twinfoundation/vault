@@ -32,6 +32,18 @@ The vault secret entity storage connector type, defaults to "vault-secret".
 
 [`EntityStorageVaultConnector`](EntityStorageVaultConnector.md)
 
+## Properties
+
+### CLASS\_NAME
+
+> `readonly` **CLASS\_NAME**: `string`
+
+Runtime name for the class.
+
+#### Implementation of
+
+`IVaultConnector.CLASS_NAME`
+
 ## Methods
 
 ### createKey()
