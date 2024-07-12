@@ -432,7 +432,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		requestContext?: IServiceRequestContext
 	): Promise<void> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		Guards.object<T>(this.CLASS_NAME, nameof(item), item);
+		Guards.defined(this.CLASS_NAME, nameof(item), item);
 		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
 
 		const vaultSecret: VaultSecret = {

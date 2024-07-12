@@ -949,7 +949,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.setSecret(TEST_SECRET_NAME, undefined as unknown as Uint8Array)
 		).rejects.toMatchObject({
 			name: "GuardError",
-			message: "guard.objectUndefined",
+			message: "guard.undefined",
 			properties: {
 				property: "item",
 				value: "undefined"
