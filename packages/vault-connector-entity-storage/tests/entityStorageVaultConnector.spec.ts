@@ -1,7 +1,6 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
 import { Converter } from "@gtsc/core";
-import { EntitySchemaFactory, EntitySchemaHelper } from "@gtsc/entity";
 import { MemoryEntityStorageConnector } from "@gtsc/entity-storage-connector-memory";
 import { EntityStorageConnectorFactory } from "@gtsc/entity-storage-models";
 import { nameof } from "@gtsc/nameof";
@@ -9,6 +8,7 @@ import { VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
 import { VaultKey } from "../src/entities/vaultKey";
 import { VaultSecret } from "../src/entities/vaultSecret";
 import { EntityStorageVaultConnector } from "../src/entityStorageVaultConnector";
+import { initSchema } from "../src/schema";
 
 const TEST_PARTITION_ID = "test-partition";
 const TEST_IDENTITY_ID = "test-identity";
@@ -21,10 +21,7 @@ let vaultSecretEntityStorageConnector: MemoryEntityStorageConnector<VaultSecret>
 
 describe("EntityStorageVaultConnector", () => {
 	beforeAll(() => {
-		EntitySchemaFactory.register(nameof<VaultKey>(), () => EntitySchemaHelper.getSchema(VaultKey));
-		EntitySchemaFactory.register(nameof<VaultSecret>(), () =>
-			EntitySchemaHelper.getSchema(VaultSecret)
-		);
+		initSchema();
 	});
 
 	beforeEach(() => {

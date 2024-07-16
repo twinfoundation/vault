@@ -3,3 +3,4 @@
 export * from "./entityStorageVaultConnector";
 export * from "./entities/vaultKey";
 export * from "./entities/vaultSecret";
+export * from "./schema";
