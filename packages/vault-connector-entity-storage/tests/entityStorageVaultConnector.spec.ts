@@ -5,8 +5,8 @@ import { MemoryEntityStorageConnector } from "@gtsc/entity-storage-connector-mem
 import { EntityStorageConnectorFactory } from "@gtsc/entity-storage-models";
 import { nameof } from "@gtsc/nameof";
 import { VaultEncryptionType, VaultKeyType } from "@gtsc/vault-models";
-import { VaultKey } from "../src/entities/vaultKey";
-import { VaultSecret } from "../src/entities/vaultSecret";
+import type { VaultKey } from "../src/entities/vaultKey";
+import type { VaultSecret } from "../src/entities/vaultSecret";
 import { EntityStorageVaultConnector } from "../src/entityStorageVaultConnector";
 import { initSchema } from "../src/schema";
 
@@ -26,10 +26,10 @@ describe("EntityStorageVaultConnector", () => {
 
 	beforeEach(() => {
 		vaultKeyEntityStorageConnector = new MemoryEntityStorageConnector<VaultKey>({
-			entitySchema: nameof(VaultKey)
+			entitySchema: nameof<VaultKey>()
 		});
 		vaultSecretEntityStorageConnector = new MemoryEntityStorageConnector<VaultSecret>({
-			entitySchema: nameof(VaultSecret)
+			entitySchema: nameof<VaultSecret>()
 		});
 
 		EntityStorageConnectorFactory.register("vault-key", () => vaultKeyEntityStorageConnector);
