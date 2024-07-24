@@ -17,6 +17,11 @@ import type { VaultSecret } from "./entities/vaultSecret";
  */
 export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
+	 * The namespace supported by the vault connector.
+	 */
+	public static readonly NAMESPACE: string = "entity-storage";
+
+	/**
 	 * Runtime name for the class.
 	 */
 	public readonly CLASS_NAME: string = nameof<EntityStorageVaultConnector>();
