@@ -14,7 +14,7 @@ const TEST_PARTITION_ID = "test-partition";
 const TEST_IDENTITY_ID = "test-identity";
 const TEST_KEY_NAME = "test-key";
 const TEST_SECRET_NAME = "test-secret";
-const TEST_CONTEXT = { partitionId: TEST_PARTITION_ID, identity: TEST_IDENTITY_ID };
+const TEST_CONTEXT = { partitionId: TEST_PARTITION_ID, userIdentity: TEST_IDENTITY_ID };
 
 let vaultKeyEntityStorageConnector: MemoryEntityStorageConnector<VaultKey>;
 let vaultSecretEntityStorageConnector: MemoryEntityStorageConnector<VaultSecret>;
@@ -92,7 +92,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -231,7 +231,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -309,7 +309,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -395,7 +395,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -457,7 +457,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -535,7 +535,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -644,7 +644,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -759,7 +759,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -877,7 +877,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -969,7 +969,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -1008,7 +1008,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});
@@ -1067,7 +1067,7 @@ describe("EntityStorageVaultConnector", () => {
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
-				property: "requestContext.identity",
+				property: "requestContext.userIdentity",
 				value: "undefined"
 			}
 		});

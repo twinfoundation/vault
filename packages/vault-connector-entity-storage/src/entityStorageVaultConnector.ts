@@ -75,10 +75,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			type,
 			Object.values(VaultKeyType)
 		);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -101,7 +105,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		}
 
 		const vaultKey: VaultKey = {
-			id: `${requestContext.identity}/${name}`,
+			id: `${requestContext.userIdentity}/${name}`,
 			type,
 			privateKey: Converter.bytesToBase64(privateKey),
 			publicKey: Converter.bytesToBase64(publicKey)
@@ -137,10 +141,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		);
 		Guards.uint8Array(this.CLASS_NAME, nameof(privateKey), privateKey);
 		Guards.uint8Array(this.CLASS_NAME, nameof(publicKey), publicKey);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -149,7 +157,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		}
 
 		const vaultKey: VaultKey = {
-			id: `${requestContext.identity}/${name}`,
+			id: `${requestContext.userIdentity}/${name}`,
 			type,
 			privateKey: Converter.bytesToBase64(privateKey),
 			publicKey: Converter.bytesToBase64(publicKey)
@@ -184,10 +192,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		publicKey: Uint8Array;
 	}> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -216,10 +228,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	): Promise<void> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 		Guards.stringValue(this.CLASS_NAME, nameof(newName), newName);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -228,11 +244,11 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		}
 
 		await this._vaultKeyEntityStorageConnector.remove(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			requestContext
 		);
 
-		vaultKey.id = `${requestContext.identity}/${newName}`;
+		vaultKey.id = `${requestContext.userIdentity}/${newName}`;
 
 		await this._vaultKeyEntityStorageConnector.set(vaultKey, requestContext);
 	}
@@ -245,10 +261,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 */
 	public async removeKey(name: string, requestContext?: IServiceRequestContext): Promise<void> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -257,7 +277,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		}
 
 		await this._vaultKeyEntityStorageConnector.remove(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			requestContext
 		);
 	}
@@ -276,10 +296,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	): Promise<Uint8Array> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 		Guards.uint8Array(this.CLASS_NAME, nameof(data), data);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -315,10 +339,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 		Guards.uint8Array(this.CLASS_NAME, nameof(data), data);
 		Guards.uint8Array(this.CLASS_NAME, nameof(signature), signature);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -356,10 +384,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			Object.values(VaultEncryptionType)
 		);
 		Guards.uint8Array(this.CLASS_NAME, nameof(data), data);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -403,10 +435,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			Object.values(VaultEncryptionType)
 		);
 		Guards.uint8Array(this.CLASS_NAME, nameof(encryptedData), encryptedData);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -438,10 +474,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	): Promise<void> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 		Guards.defined(this.CLASS_NAME, nameof(item), item);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const vaultSecret: VaultSecret = {
-			id: `${requestContext.identity}/${name}`,
+			id: `${requestContext.userIdentity}/${name}`,
 			data: JSON.stringify(item)
 		};
 
@@ -457,10 +497,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 */
 	public async getSecret<T>(name: string, requestContext?: IServiceRequestContext): Promise<T> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const secret = await this._vaultSecretEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -481,10 +525,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 */
 	public async removeSecret(name: string, requestContext?: IServiceRequestContext): Promise<void> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		Guards.stringValue(this.CLASS_NAME, nameof(requestContext?.identity), requestContext?.identity);
+		Guards.stringValue(
+			this.CLASS_NAME,
+			nameof(requestContext?.userIdentity),
+			requestContext?.userIdentity
+		);
 
 		const secret = await this._vaultSecretEntityStorageConnector.get(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			undefined,
 			requestContext
 		);
@@ -494,7 +542,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		}
 
 		return this._vaultSecretEntityStorageConnector.remove(
-			`${requestContext.identity}/${name}`,
+			`${requestContext.userIdentity}/${name}`,
 			requestContext
 		);
 	}
