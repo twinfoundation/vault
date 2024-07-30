@@ -482,7 +482,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 
 		const vaultSecret: VaultSecret = {
 			id: `${requestContext.userIdentity}/${name}`,
-			data: JSON.stringify(item)
+			data: item
 		};
 
 		await this._vaultSecretEntityStorageConnector.set(vaultSecret, requestContext);
@@ -513,7 +513,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			throw new NotFoundError(this.CLASS_NAME, "secretNotFound", name);
 		}
 
-		return JSON.parse(secret.data);
+		return secret.data as T;
 	}
 
 	/**

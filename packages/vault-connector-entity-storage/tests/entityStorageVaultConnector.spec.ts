@@ -983,7 +983,7 @@ describe("EntityStorageVaultConnector", () => {
 		const store = vaultSecretEntityStorageConnector.getStore(TEST_PARTITION_ID);
 
 		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`);
-		expect(store?.[0].data).toEqual(JSON.stringify({ foo: "bar" }));
+		expect(store?.[0].data).toEqual({ foo: "bar" });
 	});
 
 	test("can fail to get a secret with no secret name", async () => {
@@ -1029,7 +1029,7 @@ describe("EntityStorageVaultConnector", () => {
 		await vaultSecretEntityStorageConnector.set(
 			{
 				id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
-				data: JSON.stringify({ foo: "bar" })
+				data: { foo: "bar" }
 			},
 			TEST_CONTEXT
 		);
@@ -1090,7 +1090,7 @@ describe("EntityStorageVaultConnector", () => {
 		await vaultSecretEntityStorageConnector.set(
 			{
 				id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
-				data: JSON.stringify({ foo: "bar" })
+				data: { foo: "bar" }
 			},
 			TEST_CONTEXT
 		);

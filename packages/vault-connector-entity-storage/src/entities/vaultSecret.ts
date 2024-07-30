@@ -14,8 +14,8 @@ export class VaultSecret {
 	public id!: string;
 
 	/**
-	 * The JSON stringified data for the secret.
+	 * The data for the secret.
 	 */
-	@property({ type: "string" })
-	public data!: string;
+	@property({ type: "object" })
+	public data!: unknown;
 }
