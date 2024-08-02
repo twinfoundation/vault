@@ -10,11 +10,8 @@ import type { VaultSecret } from "../src/entities/vaultSecret";
 import { EntityStorageVaultConnector } from "../src/entityStorageVaultConnector";
 import { initSchema } from "../src/schema";
 
-const TEST_PARTITION_ID = "test-partition";
-const TEST_IDENTITY_ID = "test-identity";
 const TEST_KEY_NAME = "test-key";
 const TEST_SECRET_NAME = "test-secret";
-const TEST_CONTEXT = { partitionId: TEST_PARTITION_ID, userIdentity: TEST_IDENTITY_ID };
 
 let vaultKeyEntityStorageConnector: MemoryEntityStorageConnector<VaultKey>;
 let vaultSecretEntityStorageConnector: MemoryEntityStorageConnector<VaultSecret>;
@@ -51,11 +48,7 @@ describe("EntityStorageVaultConnector", () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.createKey(
-				undefined as unknown as string,
-				undefined as unknown as VaultKeyType,
-				TEST_CONTEXT
-			)
+			vaultConnector.createKey(undefined as unknown as string, undefined as unknown as VaultKeyType)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
@@ -70,7 +63,7 @@ describe("EntityStorageVaultConnector", () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.createKey(TEST_KEY_NAME, undefined as unknown as VaultKeyType, TEST_CONTEXT)
+			vaultConnector.createKey(TEST_KEY_NAME, undefined as unknown as VaultKeyType)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.arrayOneOf",
@@ -81,38 +74,18 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to create a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.createKey(TEST_KEY_NAME, VaultKeyType.Ed25519, {
-				partitionId: TEST_PARTITION_ID
-			})
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to create a key if it already exists", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.createKey(TEST_KEY_NAME, VaultKeyType.Ed25519, TEST_CONTEXT)
+			vaultConnector.createKey(TEST_KEY_NAME, VaultKeyType.Ed25519)
 		).rejects.toMatchObject({
 			name: "AlreadyExistsError",
 			properties: {
@@ -124,13 +97,13 @@ describe("EntityStorageVaultConnector", () => {
 	test("can create a key", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		const key = await vaultConnector.createKey(TEST_KEY_NAME, VaultKeyType.Ed25519, TEST_CONTEXT);
+		const key = await vaultConnector.createKey(TEST_KEY_NAME, VaultKeyType.Ed25519);
 
 		expect(key.length).toEqual(32);
 
-		const store = vaultKeyEntityStorageConnector.getStore(TEST_PARTITION_ID);
+		const store = vaultKeyEntityStorageConnector.getStore();
 
-		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`);
+		expect(store?.[0].id).toEqual(TEST_KEY_NAME);
 		expect(store?.[0].type).toEqual(VaultKeyType.Ed25519);
 		expect(Converter.base64ToBytes(store?.[0].privateKey ?? "").length).toEqual(32);
 		expect(Converter.base64ToBytes(store?.[0].publicKey ?? "").length).toEqual(32);
@@ -216,48 +189,18 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to add a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.addKey(
-				TEST_KEY_NAME,
-				VaultKeyType.Ed25519,
-				new Uint8Array(),
-				new Uint8Array(),
-				{ partitionId: TEST_PARTITION_ID }
-			)
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to add a key if it already exists", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.addKey(
-				TEST_KEY_NAME,
-				VaultKeyType.Ed25519,
-				new Uint8Array(),
-				new Uint8Array(),
-				TEST_CONTEXT
-			)
+			vaultConnector.addKey(TEST_KEY_NAME, VaultKeyType.Ed25519, new Uint8Array(), new Uint8Array())
 		).rejects.toMatchObject({
 			name: "AlreadyExistsError",
 			properties: {
@@ -273,13 +216,12 @@ describe("EntityStorageVaultConnector", () => {
 			TEST_KEY_NAME,
 			VaultKeyType.Ed25519,
 			Converter.base64ToBytes("vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag="),
-			Converter.base64ToBytes("KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="),
-			TEST_CONTEXT
+			Converter.base64ToBytes("KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y=")
 		);
 
-		const store = vaultKeyEntityStorageConnector.getStore(TEST_PARTITION_ID);
+		const store = vaultKeyEntityStorageConnector.getStore();
 
-		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`);
+		expect(store?.[0].id).toEqual(TEST_KEY_NAME);
 		expect(store?.[0].type).toEqual(VaultKeyType.Ed25519);
 		expect(Converter.base64ToBytes(store?.[0].privateKey ?? "").length).toEqual(32);
 		expect(Converter.base64ToBytes(store?.[0].publicKey ?? "").length).toEqual(32);
@@ -288,9 +230,7 @@ describe("EntityStorageVaultConnector", () => {
 	test("can fail to get a key with no key name", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await expect(
-			vaultConnector.getKey(undefined as unknown as string, TEST_CONTEXT)
-		).rejects.toMatchObject({
+		await expect(vaultConnector.getKey(undefined as unknown as string)).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
 			properties: {
@@ -300,25 +240,10 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to get a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.getKey(TEST_KEY_NAME, { partitionId: TEST_PARTITION_ID })
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to get a key if it doesn't exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await expect(vaultConnector.getKey(TEST_KEY_NAME, TEST_CONTEXT)).rejects.toMatchObject({
+		await expect(vaultConnector.getKey(TEST_KEY_NAME)).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: TEST_KEY_NAME
@@ -327,19 +252,16 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can get a key", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		const key = await vaultConnector.getKey(TEST_KEY_NAME, TEST_CONTEXT);
+		const key = await vaultConnector.getKey(TEST_KEY_NAME);
 
 		expect(key.type).toEqual(VaultKeyType.Ed25519);
 		expect(key.privateKey).toEqual(
@@ -354,11 +276,7 @@ describe("EntityStorageVaultConnector", () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.renameKey(
-				undefined as unknown as string,
-				undefined as unknown as string,
-				TEST_CONTEXT
-			)
+			vaultConnector.renameKey(undefined as unknown as string, undefined as unknown as string)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
@@ -373,7 +291,7 @@ describe("EntityStorageVaultConnector", () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.renameKey("foo", undefined as unknown as string, TEST_CONTEXT)
+			vaultConnector.renameKey("foo", undefined as unknown as string)
 		).rejects.toMatchObject({
 			name: "GuardError",
 			message: "guard.string",
@@ -384,29 +302,10 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to rename a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.renameKey(TEST_KEY_NAME, "foo", {
-				partitionId: TEST_PARTITION_ID
-			})
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to rename a key if it doesn't exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await expect(
-			vaultConnector.renameKey(TEST_KEY_NAME, "foo", TEST_CONTEXT)
-		).rejects.toMatchObject({
+		await expect(vaultConnector.renameKey(TEST_KEY_NAME, "foo")).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: TEST_KEY_NAME
@@ -415,24 +314,21 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can rename a key", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await vaultConnector.renameKey(TEST_KEY_NAME, "key2", TEST_CONTEXT);
+		await vaultConnector.renameKey(TEST_KEY_NAME, "key2");
 
-		const store = vaultKeyEntityStorageConnector.getStore(TEST_PARTITION_ID);
+		const store = vaultKeyEntityStorageConnector.getStore();
 
 		expect(store?.length).toEqual(1);
-		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/key2`);
+		expect(store?.[0].id).toEqual("key2");
 	});
 
 	test("can fail to remove a key with no key name", async () => {
@@ -448,25 +344,10 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to remove a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.removeKey(TEST_KEY_NAME, { partitionId: TEST_PARTITION_ID })
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to remove a key if it doesn't exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await expect(vaultConnector.removeKey(TEST_KEY_NAME, TEST_CONTEXT)).rejects.toMatchObject({
+		await expect(vaultConnector.removeKey(TEST_KEY_NAME)).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: TEST_KEY_NAME
@@ -475,21 +356,18 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can remove a key", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await vaultConnector.removeKey(TEST_KEY_NAME, TEST_CONTEXT);
+		await vaultConnector.removeKey(TEST_KEY_NAME);
 
-		const store = vaultKeyEntityStorageConnector.getStore(TEST_PARTITION_ID);
+		const store = vaultKeyEntityStorageConnector.getStore();
 
 		expect(store?.length).toEqual(0);
 	});
@@ -524,29 +402,10 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to sign with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.sign(TEST_KEY_NAME, new Uint8Array(), {
-				partitionId: TEST_PARTITION_ID
-			})
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to sign with a key if it doesn't exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await expect(
-			vaultConnector.sign(TEST_KEY_NAME, new Uint8Array(), TEST_CONTEXT)
-		).rejects.toMatchObject({
+		await expect(vaultConnector.sign(TEST_KEY_NAME, new Uint8Array())).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: TEST_KEY_NAME
@@ -555,23 +414,16 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can sign with a key", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		const signature = await vaultConnector.sign(
-			TEST_KEY_NAME,
-			new Uint8Array([1, 2, 3, 4, 5]),
-			TEST_CONTEXT
-		);
+		const signature = await vaultConnector.sign(TEST_KEY_NAME, new Uint8Array([1, 2, 3, 4, 5]));
 
 		expect(signature).toEqual(
 			Converter.base64ToBytes(
@@ -633,27 +485,11 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to verify with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.verify(TEST_KEY_NAME, new Uint8Array(), new Uint8Array(), {
-				partitionId: TEST_PARTITION_ID
-			})
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
 	test("can fail to verify with a key if it doesn't exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.verify(TEST_KEY_NAME, new Uint8Array(), new Uint8Array(), TEST_CONTEXT)
+			vaultConnector.verify(TEST_KEY_NAME, new Uint8Array(), new Uint8Array())
 		).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
@@ -663,15 +499,12 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can verify with a key", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
@@ -680,8 +513,7 @@ describe("EntityStorageVaultConnector", () => {
 			new Uint8Array([1, 2, 3, 4, 5]),
 			Converter.base64ToBytes(
 				"GEuFjhVIS10sF9ocBgbSCwSccgvM+yw30cAOIgD+AVLanSSM+59pw45vkAIszsPhMRd0GMZ/vwjWJHAgFMC0BA=="
-			),
-			TEST_CONTEXT
+			)
 		);
 
 		expect(verified).toEqual(true);
@@ -694,8 +526,7 @@ describe("EntityStorageVaultConnector", () => {
 			vaultConnector.encrypt(
 				undefined as unknown as string,
 				undefined as unknown as VaultEncryptionType,
-				undefined as unknown as Uint8Array,
-				TEST_CONTEXT
+				undefined as unknown as Uint8Array
 			)
 		).rejects.toMatchObject({
 			name: "GuardError",
@@ -745,36 +576,11 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to encrypt with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.encrypt(
-				TEST_KEY_NAME,
-				VaultEncryptionType.ChaCha20Poly1305,
-				new Uint8Array(),
-				{ partitionId: TEST_PARTITION_ID }
-			)
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to encrypt with a key if it doesn't exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.encrypt(
-				TEST_KEY_NAME,
-				VaultEncryptionType.ChaCha20Poly1305,
-				new Uint8Array(),
-				TEST_CONTEXT
-			)
+			vaultConnector.encrypt(TEST_KEY_NAME, VaultEncryptionType.ChaCha20Poly1305, new Uint8Array())
 		).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
@@ -784,23 +590,19 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can encrypt with a key", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		const encrypted = await vaultConnector.encrypt(
 			TEST_KEY_NAME,
 			VaultEncryptionType.ChaCha20Poly1305,
-			new Uint8Array([1, 2, 3, 4, 5]),
-			TEST_CONTEXT
+			new Uint8Array([1, 2, 3, 4, 5])
 		);
 
 		expect(encrypted.length).toEqual(33);
@@ -863,36 +665,11 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to decrypt with a key with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.decrypt(
-				TEST_KEY_NAME,
-				VaultEncryptionType.ChaCha20Poly1305,
-				new Uint8Array(),
-				{ partitionId: TEST_PARTITION_ID }
-			)
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to decrypt with a key if it doesn't exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		await expect(
-			vaultConnector.decrypt(
-				TEST_KEY_NAME,
-				VaultEncryptionType.ChaCha20Poly1305,
-				new Uint8Array(),
-				TEST_CONTEXT
-			)
+			vaultConnector.decrypt(TEST_KEY_NAME, VaultEncryptionType.ChaCha20Poly1305, new Uint8Array())
 		).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
@@ -902,23 +679,19 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can decrypt with a key", async () => {
-		await vaultKeyEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_KEY_NAME}`,
-				type: VaultKeyType.Ed25519,
-				privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-				publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
-			},
-			TEST_CONTEXT
-		);
+		await vaultKeyEntityStorageConnector.set({
+			id: TEST_KEY_NAME,
+			type: VaultKeyType.Ed25519,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
+			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
 		const decrypted = await vaultConnector.decrypt(
 			TEST_KEY_NAME,
 			VaultEncryptionType.ChaCha20Poly1305,
-			Converter.base64ToBytes("Q1wjsT0rCM1fPLl+tC6xERiUEI6vk39DyXT6AnZjdeHp"),
-			TEST_CONTEXT
+			Converter.base64ToBytes("Q1wjsT0rCM1fPLl+tC6xERiUEI6vk39DyXT6AnZjdeHp")
 		);
 
 		expect(decrypted).toEqual(new Uint8Array([1, 2, 3, 4, 5]));
@@ -954,35 +727,14 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to store a secret with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.setSecret(
-				TEST_SECRET_NAME,
-				{ foo: "bar" },
-				{
-					partitionId: TEST_PARTITION_ID
-				}
-			)
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can store a secret", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await vaultConnector.setSecret(TEST_SECRET_NAME, { foo: "bar" }, TEST_CONTEXT);
+		await vaultConnector.setSecret(TEST_SECRET_NAME, { foo: "bar" });
 
-		const store = vaultSecretEntityStorageConnector.getStore(TEST_PARTITION_ID);
+		const store = vaultSecretEntityStorageConnector.getStore();
 
-		expect(store?.[0].id).toEqual(`${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`);
+		expect(store?.[0].id).toEqual(TEST_SECRET_NAME);
 		expect(store?.[0].data).toEqual({ foo: "bar" });
 	});
 
@@ -999,25 +751,10 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	test("can fail to get a secret with no identity", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(
-			vaultConnector.getSecret(TEST_SECRET_NAME, { partitionId: TEST_PARTITION_ID })
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
-			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
-			}
-		});
-	});
-
 	test("can fail to get a secret that does not exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await expect(vaultConnector.getSecret(TEST_SECRET_NAME, TEST_CONTEXT)).rejects.toMatchObject({
+		await expect(vaultConnector.getSecret(TEST_SECRET_NAME)).rejects.toMatchObject({
 			name: "NotFoundError",
 			properties: {
 				notFoundId: TEST_SECRET_NAME
@@ -1026,17 +763,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can get a secret", async () => {
-		await vaultSecretEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
-				data: { foo: "bar" }
-			},
-			TEST_CONTEXT
-		);
+		await vaultSecretEntityStorageConnector.set({
+			id: TEST_SECRET_NAME,
+			data: { foo: "bar" }
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		const secret = await vaultConnector.getSecret(TEST_SECRET_NAME, TEST_CONTEXT);
+		const secret = await vaultConnector.getSecret(TEST_SECRET_NAME);
 
 		expect(secret).toEqual({ foo: "bar" });
 	});
@@ -1056,50 +790,28 @@ describe("EntityStorageVaultConnector", () => {
 		);
 	});
 
-	test("can fail to remove a secret with no identity", async () => {
+	test("can fail to remove a secret that does not exist", async () => {
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await expect(
-			vaultConnector.removeSecret(TEST_SECRET_NAME, {
-				partitionId: TEST_PARTITION_ID
-			})
-		).rejects.toMatchObject({
-			name: "GuardError",
-			message: "guard.string",
+		await expect(vaultConnector.removeSecret(TEST_SECRET_NAME)).rejects.toMatchObject({
+			name: "NotFoundError",
 			properties: {
-				property: "requestContext.userIdentity",
-				value: "undefined"
+				notFoundId: TEST_SECRET_NAME
 			}
 		});
 	});
 
-	test("can fail to remove a secret that does not exist", async () => {
-		const vaultConnector = new EntityStorageVaultConnector();
-
-		await expect(vaultConnector.removeSecret(TEST_SECRET_NAME, TEST_CONTEXT)).rejects.toMatchObject(
-			{
-				name: "NotFoundError",
-				properties: {
-					notFoundId: TEST_SECRET_NAME
-				}
-			}
-		);
-	});
-
 	test("can remove a secret", async () => {
-		await vaultSecretEntityStorageConnector.set(
-			{
-				id: `${TEST_IDENTITY_ID}/${TEST_SECRET_NAME}`,
-				data: { foo: "bar" }
-			},
-			TEST_CONTEXT
-		);
+		await vaultSecretEntityStorageConnector.set({
+			id: TEST_SECRET_NAME,
+			data: { foo: "bar" }
+		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
 
-		await vaultConnector.removeSecret(TEST_SECRET_NAME, TEST_CONTEXT);
+		await vaultConnector.removeSecret(TEST_SECRET_NAME);
 
-		const store = vaultSecretEntityStorageConnector.getStore(TEST_PARTITION_ID);
+		const store = vaultSecretEntityStorageConnector.getStore();
 
 		expect(store?.[0]).toBeUndefined();
 	});
