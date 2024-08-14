@@ -1,13 +1,13 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
-import type { IService } from "@gtsc/services";
+import type { IComponent } from "@gtsc/core";
 import type { VaultEncryptionType } from "./vaultEncryptionType";
 import type { VaultKeyType } from "./vaultKeyType";
 
 /**
  * Interface describing a vault securely storing data.
  */
-export interface IVaultConnector extends IService {
+export interface IVaultConnector extends IComponent {
 	/**
 	 * Create a key in the vault.
 	 * @param name The name of the key to create in the vault.
