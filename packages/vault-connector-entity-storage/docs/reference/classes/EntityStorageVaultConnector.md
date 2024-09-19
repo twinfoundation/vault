@@ -36,7 +36,7 @@ The vault secret entity storage connector type, defaults to "vault-secret".
 
 ### NAMESPACE
 
-> `static` `readonly` **NAMESPACE**: `string` = `"entity-storage"`
+> `readonly` `static` **NAMESPACE**: `string` = `"entity-storage"`
 
 The namespace supported by the vault connector.
 
@@ -342,7 +342,7 @@ The decrypted data in base64.
 
 Store a secret in the vault.
 
-#### Type parameters
+#### Type Parameters
 
 • **T**
 
@@ -374,7 +374,7 @@ Nothing.
 
 Get a secret from the vault.
 
-#### Type parameters
+#### Type Parameters
 
 • **T**
 
@@ -390,13 +390,13 @@ The name of the item in the vault to get.
 
 The item from the vault.
 
-#### Implementation of
-
-`IVaultConnector.getSecret`
-
 #### Throws
 
 Error if the item is not found.
+
+#### Implementation of
+
+`IVaultConnector.getSecret`
 
 ***
 
@@ -418,10 +418,10 @@ The name of the item in the vault to remove.
 
 Nothing.
 
-#### Implementation of
-
-`IVaultConnector.removeSecret`
-
 #### Throws
 
 Error if the item is not found.
+
+#### Implementation of
+
+`IVaultConnector.removeSecret`

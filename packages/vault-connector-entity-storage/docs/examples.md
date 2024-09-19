@@ -1,1 +1,1 @@
-# @gtsc/vault-connector-entity-storage - Examples
+# @twin.org/vault-connector-entity-storage - Examples
