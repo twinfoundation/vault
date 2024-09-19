@@ -1,6 +1,6 @@
-# GTSC Vault
+# TWIN Vault
 
-This mono-repository contains the packages to use with Vaults in GTSC applications.
+This mono-repository contains the packages to use with Vaults in TWIN applications.
 
 ## Packages
 

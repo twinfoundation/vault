@@ -1,4 +1,4 @@
-# @gtsc/vault-models
+# @twin.org/vault-models
 
 ## Interfaces
 

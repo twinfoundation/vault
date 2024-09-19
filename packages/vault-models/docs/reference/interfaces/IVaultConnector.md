@@ -260,7 +260,7 @@ The decrypted data.
 
 Store a secret in the vault.
 
-#### Type parameters
+#### Type Parameters
 
 • **T**
 
@@ -288,7 +288,7 @@ Nothing.
 
 Get a secret from the vault.
 
-#### Type parameters
+#### Type Parameters
 
 • **T**
 

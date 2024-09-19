@@ -1,4 +1,4 @@
-# @gtsc/vault-connector-entity-storage
+# @twin.org/vault-connector-entity-storage
 
 ## Classes
 
