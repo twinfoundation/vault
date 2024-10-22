@@ -1,0 +1,15 @@
+{
+	"info": {
+		"hashicorpStorageVaultConnector": {
+			"hashicorpVaultConnected": "Connected to Hashicorp Vault"
+		}
+	},
+	"error": {
+		"hashicorpStorageVaultConnector": {
+			"setSecretFailed": "Failed to set secret \"{name}\"",
+			"removeSecretFailed": "Failed to remove secret \"{name}\"",
+			"getSecretVersionsFailed": "Failed to get secret versions \"{name}\"",
+			"hashicorpVaultConnectionFailed": "Failed to connect to Hashicorp Vault"
+		}
+	}
+}
