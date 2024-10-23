@@ -5,7 +5,7 @@ Vault connector implementation using entity storage.
 ## Installation
 
 ```shell
-npm install @twin.org/hashicorp-vault-connector-storage
+npm install @twin.org/vault-connector-hashicorp-storage
 ```
 
 ## Examples

@@ -1,15 +1,13 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
-import { Guards, NotFoundError } from "@twin.org/core";
+import { Guards, NotFoundError, BaseError, GeneralError } from "@twin.org/core";
+import { LoggingConnectorFactory } from "@twin.org/logging-models";
 import { nameof } from "@twin.org/nameof";
 import {
 	type IVaultConnector,
 	type VaultEncryptionType,
 	VaultKeyType
 } from "@twin.org/vault-models";
-import { BaseError } from "./../../../../framework/packages/core/src/errors/baseError";
-import { GeneralError } from "./../../../../framework/packages/core/src/errors/generalError";
-import { LoggingConnectorFactory } from "./../../../../logging/packages/logging-models/src/factories/loggingConnectorFactory";
 import type { IHashicorpVaultConnectorConfig } from "./models/IHashicorpVaultConnectorConfig";
 
 /**
