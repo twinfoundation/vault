@@ -3,4 +3,4 @@
 export * from "./hashicorpStorageVaultConnector";
 export * from "./entities/vaultKey";
 export * from "./entities/vaultSecret";
-// export * from "./schema";
+export * from "./models/IHashicorpVaultConnectorConfig";

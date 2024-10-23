@@ -1,6 +1,6 @@
-# TWIN Vault Connector Entity Storage
+# TWIN Vault Connector Hashicorp Storage
 
-Vault connector implementation using entity storage.
+Vault connector implementation using Hashicorp Storage.
 
 ## Installation
 
