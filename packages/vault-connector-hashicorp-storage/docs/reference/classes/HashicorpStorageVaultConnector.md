@@ -198,6 +198,26 @@ The private key.
 
 ***
 
+### getKeyDeleteConfiguration()
+
+> **getKeyDeleteConfiguration**(`name`): `Promise`\<`boolean`\>
+
+Get the key configuration.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the key to get the configuration for.
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+True if the key can be deleted.
+
+***
+
 ### addKey()
 
 > **addKey**(`name`, `type`, `privateKey`, `publicKey`): `Promise`\<`void`\>
@@ -473,3 +493,155 @@ The versions of the secret.
 #### Throws
 
 Error if the secret is not found.
+
+***
+
+### updateKeyConfig()
+
+> **updateKeyConfig**(`name`, `deletionAllowed`): `Promise`\<`void`\>
+
+Update the configuration of a key.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the key to update.
+
+• **deletionAllowed**: `boolean`
+
+Whether the key can be deleted.
+
+#### Returns
+
+`Promise`\<`void`\>
+
+Nothing.
+
+***
+
+### getPublicKey()
+
+> **getPublicKey**(`name`, `version`?): `Promise`\<`Uint8Array`\>
+
+Export the public key from the vault.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the key.
+
+• **version?**: `string`
+
+The version of the key. If omitted, the latest version of the key will be returned.
+
+#### Returns
+
+`Promise`\<`Uint8Array`\>
+
+The public key as a Uint8Array.
+
+#### Throws
+
+Error if the key cannot be exported or found.
+
+***
+
+### backupKey()
+
+> **backupKey**(`name`): `Promise`\<`string`\>
+
+Backup a key from the vault.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the key to backup.
+
+#### Returns
+
+`Promise`\<`string`\>
+
+The private key as a Uint8Array.
+
+#### Throws
+
+Error if the key cannot be exported or found.
+
+***
+
+### restoreKey()
+
+> **restoreKey**(`name`, `backup`): `Promise`\<`void`\>
+
+Restore a key to the vault.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the key to restore.
+
+• **backup**: `string`
+
+The backup of the key.
+
+#### Returns
+
+`Promise`\<`void`\>
+
+Nothing.
+
+#### Throws
+
+Error if the key cannot be restored.
+
+***
+
+### mapVaultKeyType()
+
+> **mapVaultKeyType**(`type`): `string`
+
+Map the vault key type to the hashicorp type.
+
+#### Parameters
+
+• **type**: `VaultKeyType`
+
+The vault key type.
+
+#### Returns
+
+`string`
+
+The hashicorp type as a string.
+
+#### Throws
+
+Error if the key type is not supported.
+
+***
+
+### mapVaultEncryptionType()
+
+> **mapVaultEncryptionType**(`type`): `string`
+
+Map the vault encryption type to the hashicorp type.
+
+#### Parameters
+
+• **type**: `0`
+
+The vault encryption type.
+
+#### Returns
+
+`string`
+
+The hashicorp type as a string.
+
+#### Throws
+
+Error if the encryption type is not supported.

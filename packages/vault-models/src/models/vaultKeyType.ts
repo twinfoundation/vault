@@ -7,14 +7,19 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const VaultKeyType = {
 	/**
-	 * Ed25519.
+	 * Ed25519. (asymmetric)
 	 */
 	Ed25519: 0,
 
 	/**
-	 * Secp256k1.
+	 * Secp256k1. (asymmetric)
 	 */
-	Secp256k1: 1
+	Secp256k1: 1,
+
+	/**
+	 * The ChaCha20Poly1305. (symmetric)
+	 */
+	ChaCha20Poly1305: 3
 } as const;
 
 /**

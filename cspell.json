@@ -17,7 +17,7 @@
 		".eslintrc.cjs",
 		"**/wordlists/**"
 	],
-	"words": ["bech", "decryptor", "encryptor", "nameof", "Secp", "Stiftung"],
+	"words": ["bech", "chacha20", "decryptor", "encryptor", "nameof", "Secp", "Stiftung"],
 	"ignoreRegExpList": [
 		"/from\\s+(['\"]).*\\1/",
 		"/eslint-disable.*/",

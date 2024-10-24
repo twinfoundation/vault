@@ -14,7 +14,7 @@
 		"sourceRoot": "./src",
 		"declaration": true,
 		"declarationDir": "dist/types",
-		"types": [],
+		"types": ["node"],
 		"plugins": [{ "transform": "@twin.org/nameof-transformer" }]
 	},
 	"include": ["src/**/*.ts"]

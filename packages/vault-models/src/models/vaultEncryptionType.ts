@@ -7,7 +7,7 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const VaultEncryptionType = {
 	/**
-	 * The ChaCha20Poly1305 encryption type.
+	 * The ChaCha20Poly1305. (symmetric)
 	 */
 	ChaCha20Poly1305: 0
 } as const;
