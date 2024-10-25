@@ -4,9 +4,9 @@ Configuration for the Hashicorp Vault Connector.
 
 ## Properties
 
-### address
+### endpoint
 
-> **address**: `string`
+> **endpoint**: `string`
 
 The address of the Hashicorp Vault (e.g., "http://localhost:8200").
 

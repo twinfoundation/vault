@@ -8,7 +8,7 @@ export interface IHashicorpVaultConnectorConfig {
 	/**
 	 * The address of the Hashicorp Vault (e.g., "http://localhost:8200").
 	 */
-	address: string;
+	endpoint: string;
 
 	/**
 	 * The authentication token for the Hashicorp Vault.

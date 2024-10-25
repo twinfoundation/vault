@@ -1,9 +1,19 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
-import { Guards, NotFoundError, BaseError, GeneralError, Converter } from "@twin.org/core";
+import {
+	Guards,
+	NotFoundError,
+	BaseError,
+	GeneralError,
+	Converter,
+	AlreadyExistsError,
+	NotSupportedError
+} from "@twin.org/core";
+// import type { IJsonLdDocument } from "@twin.org/data-json-ld";
 import { LoggingConnectorFactory } from "@twin.org/logging-models";
 import { nameof } from "@twin.org/nameof";
 import { type IVaultConnector, VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
+import { FetchHelper, HttpMethod } from "@twin.org/web";
 import type { IHashicorpVaultConnectorConfig } from "./models/IHashicorpVaultConnectorConfig";
 
 /**
@@ -53,23 +63,22 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Create a new instance of HashicorpStorageVaultConnector.
 	 * @param options The options for the vault connector.
-	 * @param options.loggingConnectorType The logging connector type, defaults to "node-logging".
 	 * @param options.config The configuration for the Hashicorp Vault connector.
 	 */
-	constructor(options: { loggingConnectorType?: string; config: IHashicorpVaultConnectorConfig }) {
+	constructor(options: { config: IHashicorpVaultConnectorConfig }) {
 		Guards.object(this.CLASS_NAME, nameof(options), options);
 		Guards.object<IHashicorpVaultConnectorConfig>(
 			this.CLASS_NAME,
 			nameof(options.config),
 			options.config
 		);
-		Guards.stringValue(this.CLASS_NAME, nameof(options.config.address), options.config.address);
+		Guards.stringValue(this.CLASS_NAME, nameof(options.config.endpoint), options.config.endpoint);
 		Guards.stringValue(this.CLASS_NAME, nameof(options.config.token), options.config.token);
 
 		this._config = options.config;
 		this._kvMountPath = this._config.kvMountPath ?? "secret";
 		this._transitMountPath = this._config.transitMountPath ?? "transit";
-		this._baseUrl = `${this._config.address}/v1`;
+		this._baseUrl = `${this._config.endpoint}/v1`;
 		this._headers = {
 			"X-Vault-Token": this._config.token,
 			"Content-Type": "application/json"
@@ -99,7 +108,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 				ts: Date.now(),
 				message: "hashicorpVaultConnected",
 				data: {
-					address: this._config.address,
+					address: this._config.endpoint,
 					token: this._config.token
 				}
 			});
@@ -113,7 +122,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 				message: "hashicorpVaultConnectionFailed",
 				error: BaseError.fromError(err),
 				data: {
-					address: this._config.address,
+					address: this._config.endpoint,
 					token: this._config.token
 				}
 			});
@@ -136,10 +145,8 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			const url = `${this._baseUrl}/${path}`;
 			const payload = { data };
 
-			await fetch(url, {
-				method: "POST",
-				headers: this._headers,
-				body: JSON.stringify(payload)
+			await FetchHelper.fetchJson(this.CLASS_NAME, url, HttpMethod.POST, payload, {
+				headers: this._headers
 			});
 		} catch (err) {
 			throw new GeneralError(this.CLASS_NAME, "setSecretFailed", { name }, err);
@@ -164,6 +171,17 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 				headers: this._headers
 			});
 
+			// const response = await FetchHelper.fetchJson<never, IJsonLdDocument>(
+			// 	this.CLASS_NAME,
+			// 	url,
+			// 	HttpMethod.GET,
+			// 	undefined,
+			// 	{ headers: this._headers }
+			// );
+
+			// eslint-disable-next-line no-console
+			console.log(response);
+
 			if (response.status === 404) {
 				throw new NotFoundError(this.CLASS_NAME, "secretNotFound", name);
 			}
@@ -171,6 +189,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			const jsonResponse = await response.json();
 
 			return jsonResponse.data.data as T;
+			// return response.data.data as T;
 		} catch (err) {
 			throw new GeneralError(this.CLASS_NAME, "setSecretFailed", { name }, err);
 		}
@@ -217,6 +236,11 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 		);
 
 		try {
+			// const existingVaultKey = await this.getKey(name);
+			// if(!Is.empty(existingVaultKey)) {
+			// 	throw new AlreadyExistsError(this.CLASS_NAME, "keyAlreadyExists", name);
+			// }
+
 			const path = this.getTransitKeyPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
@@ -241,10 +265,13 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			}
 
 			// If the key is symmetric, return the private key
-			const symetricKey = await this.backupKey(name);
-			const privateKey = Uint8Array.from(Buffer.from(symetricKey, "base64"));
+			const symmetricKey = await this.backupKey(name);
+			const privateKey = Uint8Array.from(Buffer.from(symmetricKey, "base64"));
 			return privateKey;
 		} catch (err) {
+			if (err instanceof AlreadyExistsError) {
+				throw err;
+			}
 			throw new GeneralError(this.CLASS_NAME, "createdKeyFailed", { name, type }, err);
 		}
 	}
@@ -287,7 +314,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 		privateKey: Uint8Array,
 		publicKey: Uint8Array
 	): Promise<void> {
-		throw new GeneralError(this.CLASS_NAME, "addKeyNotSupported");
+		throw new NotSupportedError(this.CLASS_NAME, "addKeyNotSupported");
 	}
 
 	/**
@@ -400,6 +427,8 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			const jsonResponse = await response.json();
 			if (jsonResponse?.data?.signature) {
 				const signature = jsonResponse.data.signature;
+				// eslint-disable-next-line no-console
+				console.log({ sign: signature });
 				return Buffer.from(signature);
 			}
 			throw new GeneralError(this.CLASS_NAME, "invalidSignResponse", { name });
@@ -425,7 +454,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			const url = `${this._baseUrl}/${path}`;
 
 			const base64Data = Converter.bytesToBase64(data);
-			const signatureString = Buffer.from(signature).toString("utf8");
+			const signatureString = Converter.bytesToUtf8(signature);
 
 			const payload = {
 				input: base64Data,
@@ -539,8 +568,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 
 			if (jsonResponse?.data?.plaintext) {
 				const { plaintext } = jsonResponse.data;
-				const decodedPlaintext = Buffer.from(plaintext, "base64");
-				return Uint8Array.from(decodedPlaintext);
+				return Converter.base64ToBytes(plaintext);
 			}
 		} catch (err) {
 			throw new GeneralError(this.CLASS_NAME, "decryptDataFailed", { name, encryptionType }, err);
@@ -704,8 +732,9 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 	 * @param type The vault key type.
 	 * @returns The hashicorp type as a string.
 	 * @throws Error if the key type is not supported.
+	 * @internal
 	 */
-	public mapVaultKeyType(type: VaultKeyType): string {
+	private mapVaultKeyType(type: VaultKeyType): string {
 		switch (type) {
 			case VaultKeyType.Ed25519:
 				return "ed25519";
@@ -713,21 +742,6 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 				return "chacha20-poly1305";
 			default:
 				throw new GeneralError(this.CLASS_NAME, "unsupportedKeyType", { type });
-		}
-	}
-
-	/**
-	 * Map the vault encryption type to the hashicorp type.
-	 * @param type The vault encryption type.
-	 * @returns The hashicorp type as a string.
-	 * @throws Error if the encryption type is not supported.
-	 */
-	public mapVaultEncryptionType(type: VaultEncryptionType): string {
-		switch (type) {
-			case VaultEncryptionType.ChaCha20Poly1305:
-				return "chacha20-poly1305";
-			default:
-				throw new GeneralError(this.CLASS_NAME, "unsupportedEncryptionType", { type });
 		}
 	}
 

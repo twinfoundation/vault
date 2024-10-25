@@ -5,6 +5,9 @@ import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models"; // r
 import { cleanupKeys, cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
 import { HashicorpStorageVaultConnector } from "../src/hashicorpStorageVaultConnector";
 
+const TEST_KEY_NAME = "test-key";
+// const TEST_SECRET_NAME = "test-secret";
+
 let vaultConnector: HashicorpStorageVaultConnector;
 
 describe("EntityStorageVaultConnector", () => {
@@ -23,9 +26,9 @@ describe("EntityStorageVaultConnector", () => {
 		await cleanupSecrets(["test-secret"]);
 		await cleanupKeys([
 			"test-key",
-			"test-restore-origian-key",
+			"test-restore-origin-key",
 			"test-restore-new-key",
-			"test-rename-origian-key",
+			"test-rename-origin-key",
 			"test-rename-new-key"
 		]);
 	});
@@ -64,6 +67,41 @@ describe("EntityStorageVaultConnector", () => {
 
 		await expect(vaultConnector.getSecret(secretName)).rejects.toThrowError();
 	});
+
+	test("can fail to create a key with no key name", async () => {
+		await expect(
+			vaultConnector.createKey(undefined as unknown as string, undefined as unknown as VaultKeyType)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.string",
+			properties: {
+				property: "name",
+				value: "undefined"
+			}
+		});
+	});
+
+	test("can fail to create a key with no key type", async () => {
+		await expect(
+			vaultConnector.createKey(TEST_KEY_NAME, undefined as unknown as VaultKeyType)
+		).rejects.toMatchObject({
+			name: "GuardError",
+			message: "guard.arrayOneOf",
+			properties: {
+				property: "type",
+				value: "undefined"
+			}
+		});
+	});
+
+	// test("can fail to create a key if it already exists", async () => {
+	// 	const keyName = "test-key";
+	// 	const keyType = VaultKeyType.Ed25519;
+
+	// 	await vaultConnector.createKey(keyName, keyType);
+
+	// 	await expect(vaultConnector.createKey(keyName, keyType)).rejects.toThrowError(AlreadyExistsError);
+	// });
 
 	test("can create and get key", async () => {
 		const keyName = "test-key";
@@ -119,7 +157,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can restore a key", async () => {
-		const originalKeyName = "test-restore-origian-key";
+		const originalKeyName = "test-restore-origin-key";
 		const restoredKeyNewName = "test-restore-new-key";
 		const keyType = VaultKeyType.Ed25519;
 
@@ -135,7 +173,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can rename a key", async () => {
-		const originalKeyName = "test-rename-origian-key";
+		const originalKeyName = "test-rename-origin-key";
 		const newKeyName = "test-rename-new-key";
 		const keyType = VaultKeyType.Ed25519;
 

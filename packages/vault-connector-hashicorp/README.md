@@ -1,11 +1,11 @@
-# TWIN Vault Connector Hashicorp Storage
+# TWIN Vault Connector Hashicorp
 
-Vault connector implementation using Hashicorp Storage.
+Vault connector implementation using Hashicorp.
 
 ## Installation
 
 ```shell
-npm install @twin.org/vault-connector-hashicorp-storage
+npm install @twin.org/vault-connector-hashicorp
 ```
 
 ## Testing
@@ -13,7 +13,7 @@ npm install @twin.org/vault-connector-hashicorp-storage
 The tests developed are functional tests and need an instance of Hashicorp Vault up and running. To run Hashicorp Vault locally:
 
 ```sh
-docker run -d --name twin-hashicorp-storage-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault:1.18.0
+docker run -d --name twin-hashicorp-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault:1.18.0
 ```
 
 After starting the vault, you need to do the following steps:

@@ -1,9 +1,7 @@
-# @twin.org/vault-connector-hashicorp-storage
+# @twin.org/vault-connector-hashicorp
 
 ## Classes
 
-- [VaultKey](classes/VaultKey.md)
-- [VaultSecret](classes/VaultSecret.md)
 - [HashicorpStorageVaultConnector](classes/HashicorpStorageVaultConnector.md)
 
 ## Interfaces

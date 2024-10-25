@@ -41,7 +41,7 @@
 	"workspaces": [
 		"packages/vault-models",
 		"packages/vault-connector-entity-storage",
-		"packages/vault-connector-hashicorp-storage"
+		"packages/vault-connector-hashicorp"
 	],
 	"type": "module"
 }

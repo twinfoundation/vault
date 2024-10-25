@@ -16,7 +16,7 @@ Guards.stringValue("TestEnv", "VAULT_KV_MOUNT_PATH", process.env.VAULT_KV_MOUNT_
 Guards.stringValue("TestEnv", "VAULT_TRANSIT_MOUNT_PATH", process.env.VAULT_TRANSIT_MOUNT_PATH);
 
 export const TEST_VAULT_CONFIG: IHashicorpVaultConnectorConfig = {
-	address: process.env.VAULT_ADDRESS ?? "http://localhost:8200",
+	endpoint: process.env.VAULT_ADDRESS ?? "http://localhost:8200",
 	token: process.env.VAULT_TOKEN ?? "root",
 	kvMountPath: process.env.VAULT_KV_MOUNT_PATH ?? "secret",
 	transitMountPath: process.env.VAULT_TRANSIT_MOUNT_PATH ?? "transit"

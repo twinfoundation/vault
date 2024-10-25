@@ -20,10 +20,6 @@ Create a new instance of HashicorpStorageVaultConnector.
 
 The options for the vault connector.
 
-• **options.loggingConnectorType?**: `string`
-
-The logging connector type, defaults to "node-logging".
-
 • **options.config**: [`IHashicorpVaultConnectorConfig`](../interfaces/IHashicorpVaultConnectorConfig.md)
 
 The configuration for the Hashicorp Vault connector.
@@ -601,51 +597,3 @@ Nothing.
 #### Throws
 
 Error if the key cannot be restored.
-
-***
-
-### mapVaultKeyType()
-
-> **mapVaultKeyType**(`type`): `string`
-
-Map the vault key type to the hashicorp type.
-
-#### Parameters
-
-• **type**: `VaultKeyType`
-
-The vault key type.
-
-#### Returns
-
-`string`
-
-The hashicorp type as a string.
-
-#### Throws
-
-Error if the key type is not supported.
-
-***
-
-### mapVaultEncryptionType()
-
-> **mapVaultEncryptionType**(`type`): `string`
-
-Map the vault encryption type to the hashicorp type.
-
-#### Parameters
-
-• **type**: `0`
-
-The vault encryption type.
-
-#### Returns
-
-`string`
-
-The hashicorp type as a string.
-
-#### Throws
-
-Error if the encryption type is not supported.

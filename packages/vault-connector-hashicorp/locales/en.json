@@ -1,11 +1,11 @@
 {
 	"info": {
-		"hashicorpStorageVaultConnector": {
+		"hashicorpStorageVault": {
 			"hashicorpVaultConnected": "Connected to Hashicorp Vault"
 		}
 	},
 	"error": {
-		"hashicorpStorageVaultConnector": {
+		"hashicorpStorageVault": {
 			"setSecretFailed": "Failed to set secret \"{name}\"",
 			"removeSecretFailed": "Failed to remove secret \"{name}\"",
 			"getSecretVersionsFailed": "Failed to get secret versions \"{name}\"",
@@ -30,7 +30,8 @@
 			"encryptDataFailed": "Failed to encrypt data \"{name, encryptionType}\"",
 			"unsupportedEncryptionType": "Unsupported encryption type \"{encryptionType}\"",
 			"decryptDataFailed": "Failed to decrypt data \"{name, encryptionType}\"",
-			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\""
+			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\"",
+			"keyAlreadyExists": "Key \"{name}\" already exists"
 		}
 	}
 }
