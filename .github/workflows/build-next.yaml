@@ -31,18 +31,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Wait for Vault to be ready
-        run: |
-          for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8200/v1/sys/health || echo "000")
-            if [ "$STATUS" -eq 200 ]; then
-              echo "Vault is ready"
-              break
-            fi
-            echo "Waiting for Vault to be ready..."
-            sleep 3
-          done
-
       - name: Set Vault environment variables
         run: |
           echo "VAULT_ADDR=http://localhost:8200" >> $GITHUB_ENV
