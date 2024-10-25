@@ -47,13 +47,15 @@ jobs:
           echo "VAULT_ADDR=http://localhost:8200" >> $GITHUB_ENV
           echo "VAULT_TOKEN=root" >> $GITHUB_ENV
 
-      - name: Setup Hashicorp Vault Transit Policy
+      - name: Authenticate to Vault
+        uses: hashicorp/vault-action@v2.4.0
+        with:
+          url: 'http://localhost:8200'
+          token: 'root'
+
+      - name: Enable Transit Secrets Engine
         run: |
-          curl \
-            --header "X-Vault-Token: $VAULT_TOKEN" \
-            --request POST \
-            --data '{"type":"transit"}' \
-            $VAULT_ADDR/v1/sys/mounts/transit
+          vault secrets enable transit
 
       - name: Restore root node_modules from cache
         id: node-cache
