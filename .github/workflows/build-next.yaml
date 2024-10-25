@@ -14,12 +14,13 @@ jobs:
 
     services:
       vault:
-        image: hashicorp/vault
+        image: hashicorp/vault:1.18.0
         ports:
           - 8200:8200
+        env:
+          VAULT_DEV_ROOT_TOKEN_ID: root
         options: >-
           --cap-add=IPC_LOCK
-          -e 'VAULT_DEV_ROOT_TOKEN_ID=root'
 
     steps:
       - name: Checkout
