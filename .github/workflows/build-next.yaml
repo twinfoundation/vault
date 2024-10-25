@@ -41,7 +41,6 @@ jobs:
         run: |
           docker exec -e VAULT_ADDR='http://127.0.0.1:8200' -e VAULT_TOKEN='root' twin-entity-storage-vault vault secrets enable transit
 
-
       - name: Restore root node_modules from cache
         id: node-cache
         uses: actions/cache@v4
