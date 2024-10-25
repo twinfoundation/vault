@@ -23,7 +23,7 @@ jobs:
 
       - name: Start Hashicorp Vault
         run: |
-          docker run -d --name twin-entity-storage-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault:1.18.0
+          docker run -d --name twin-entity-storage-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault
 
       - name: Wait for Vault to be ready
         run: |
@@ -39,7 +39,8 @@ jobs:
 
       - name: Enable Transit Secrets Engine inside Vault container
         run: |
-          docker exec twin-entity-storage-vault vault secrets enable transit
+          docker exec -e VAULT_ADDR='http://127.0.0.1:8200' -e VAULT_TOKEN='root' twin-entity-storage-vault vault secrets enable transit
+
 
       - name: Restore root node_modules from cache
         id: node-cache
