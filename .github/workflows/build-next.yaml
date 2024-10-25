@@ -47,12 +47,6 @@ jobs:
           echo "VAULT_ADDR=http://localhost:8200" >> $GITHUB_ENV
           echo "VAULT_TOKEN=root" >> $GITHUB_ENV
 
-      - name: Authenticate to Vault
-        uses: hashicorp/vault-action@v2.4.0
-        with:
-          url: 'http://localhost:8200'
-          token: 'root'
-
       - name: Enable Transit Secrets Engine
         run: |
           vault secrets enable transit
