@@ -28,7 +28,9 @@
 			"verifyDataFailed": "Failed to verify data \"{name}\"",
 			"invalidSignature": "Invalid signature \"{name}\"",
 			"encryptDataFailed": "Failed to encrypt data \"{name, encryptionType}\"",
-			"unsupportedEncryptionType": "Unsupported encryption type \"{encryptionType}\""
+			"unsupportedEncryptionType": "Unsupported encryption type \"{encryptionType}\"",
+			"decryptDataFailed": "Failed to decrypt data \"{name, encryptionType}\"",
+			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\""
 		}
 	}
 }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0.
 import { I18n, NotFoundError } from "@twin.org/core";
 import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models"; // remove this
-import { cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
+import { cleanupKeys, cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
 import { HashicorpStorageVaultConnector } from "../src/hashicorpStorageVaultConnector";
 
 let vaultConnector: HashicorpStorageVaultConnector;
@@ -20,7 +20,14 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	afterEach(async () => {
-		await cleanupSecrets(["test-secret", "test-secret-versions"]);
+		await cleanupSecrets(["test-secret"]);
+		await cleanupKeys([
+			"test-key",
+			"test-restore-origian-key",
+			"test-restore-new-key",
+			"test-rename-origian-key",
+			"test-rename-new-key"
+		]);
 	});
 
 	test("can set and get a secret", async () => {
@@ -37,7 +44,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can get the number of secret versions", async () => {
-		const secretName = "test-secret-versions";
+		const secretName = "test-secret";
 		const secretData = { key: "value", number: 42 };
 
 		await vaultConnector.setSecret(secretName, secretData);
@@ -74,7 +81,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can update key configuration to allow deletion", async () => {
-		const keyName = "test-update-config-key";
+		const keyName = "test-key";
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -88,7 +95,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can remove a key", async () => {
-		const keyName = "test-update-config-key";
+		const keyName = "test-key";
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -99,7 +106,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can backup a key", async () => {
-		const keyName = "test-backup-key";
+		const keyName = "test-key";
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -163,7 +170,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can sign and verify data", async () => {
-		const keyName = "test-sign-key";
+		const keyName = "test-key";
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -178,7 +185,7 @@ describe("EntityStorageVaultConnector", () => {
 	});
 
 	test("can encrypt and decrypt data", async () => {
-		const keyName = "test-encrypt-key2";
+		const keyName = "test-key";
 		const keyType = VaultKeyType.ChaCha20Poly1305;
 		const encryptionType = VaultEncryptionType.ChaCha20Poly1305;
 
@@ -186,8 +193,15 @@ describe("EntityStorageVaultConnector", () => {
 
 		const data = Buffer.from("test-data");
 
-		// const encryptedData = vaultConnector.mapVaultEncryptionType(keyType);
+		const encryptedData = await vaultConnector.encrypt(keyName, encryptionType, data);
 
-		await vaultConnector.encrypt(keyName, encryptionType, data);
+		expect(encryptedData).toBeDefined();
+		expect(encryptedData.length).toBeGreaterThan(0);
+
+		const decryptedData = await vaultConnector.decrypt(keyName, encryptionType, encryptedData);
+
+		expect(decryptedData).toBeDefined();
+		expect(decryptedData.length).toBeGreaterThan(0);
+		expect(Buffer.from(decryptedData).toString()).toEqual("test-data");
 	});
 });

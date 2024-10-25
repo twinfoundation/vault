@@ -19,7 +19,7 @@ export const VaultKeyType = {
 	/**
 	 * The ChaCha20Poly1305. (symmetric)
 	 */
-	ChaCha20Poly1305: 3
+	ChaCha20Poly1305: 2
 } as const;
 
 /**

@@ -12,6 +12,15 @@ jobs:
     env:
       TEST_MNEMONIC: ${{ secrets.TEST_MNEMONIC }}
 
+    services:
+      vault:
+        image: hashicorp/vault
+        ports:
+          - 8200:8200
+        options: >-
+          --cap-add=IPC_LOCK
+          -e 'VAULT_DEV_ROOT_TOKEN_ID=root'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,6 +29,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Setup Hashicorp Vault Transit Policy
+        run: |
+          curl \
+            --header "X-Vault-Token: root" \
+            --request POST \
+            --data '{"type":"transit"}' \
+            http://localhost:8200/v1/sys/mounts/transit
 
       - name: Restore root node_modules from cache
         id: node-cache

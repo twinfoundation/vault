@@ -498,7 +498,7 @@ Error if the secret is not found.
 
 ### updateKeyConfig()
 
-> **updateKeyConfig**(`name`, `deletionAllowed`): `Promise`\<`void`\>
+> **updateKeyConfig**(`name`, `deletionAllowed`?, `exportable`?): `Promise`\<`void`\>
 
 Update the configuration of a key.
 
@@ -508,9 +508,13 @@ Update the configuration of a key.
 
 The name of the key to update.
 
-• **deletionAllowed**: `boolean`
+• **deletionAllowed?**: `boolean`
 
 Whether the key can be deleted.
+
+• **exportable?**: `boolean`
+
+Whether the key can be exported.
 
 #### Returns
 

@@ -42,3 +42,24 @@ export async function cleanupSecrets(secretNames: string[]): Promise<void> {
 		}
 	}
 }
+
+/**
+ * Cleans up the keys from the vault.
+ * @param keyNames - The names of the keys to clean up.
+ */
+export async function cleanupKeys(keyNames: string[]): Promise<void> {
+	const vaultConnector = new HashicorpStorageVaultConnector({
+		config: TEST_VAULT_CONFIG
+	});
+	await vaultConnector.bootstrap();
+
+	for (const keyName of keyNames) {
+		try {
+			await vaultConnector.removeKey(keyName);
+		} catch (error) {
+			if (error instanceof Error) {
+				console.warn(`Failed to clean up key ${keyName}: ${error.message}`);
+			}
+		}
+	}
+}

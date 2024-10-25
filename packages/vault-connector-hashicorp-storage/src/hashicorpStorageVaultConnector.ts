@@ -1,6 +1,6 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
-import { Guards, NotFoundError, BaseError, GeneralError } from "@twin.org/core";
+import { Guards, NotFoundError, BaseError, GeneralError, Converter } from "@twin.org/core";
 import { LoggingConnectorFactory } from "@twin.org/logging-models";
 import { nameof } from "@twin.org/nameof";
 import { type IVaultConnector, VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
@@ -224,31 +224,27 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 
 			const payload = {
 				type: vaultKeyType,
-				exportable: this.isAsymmetricKeyType(type),
+				exportable: true,
 				allow_plaintext_backup: true // eslint-disable-line camelcase
 			};
 
-			const response = await fetch(url, {
+			await fetch(url, {
 				method: "POST",
 				headers: this._headers,
 				body: JSON.stringify(payload)
 			});
 
-			const jsonResponse = await response.json();
-
-			// eslint-disable-next-line no-console
-			console.log({ createKey: jsonResponse.data.keys });
-
+			// If the key is asymmetric, return the public key
 			if (this.isAsymmetricKeyType(type)) {
 				const publicKey = await this.getPublicKey(name);
 				return publicKey;
 			}
 
-			const privateKey = await this.exportPrivateKey(name, type);
-			return privateKey.privateKey;
+			// If the key is symmetric, return the private key
+			const symetricKey = await this.backupKey(name);
+			const privateKey = Uint8Array.from(Buffer.from(symetricKey, "base64"));
+			return privateKey;
 		} catch (err) {
-			// eslint-disable-next-line no-console
-			console.log(err);
 			throw new GeneralError(this.CLASS_NAME, "createdKeyFailed", { name, type }, err);
 		}
 	}
@@ -389,7 +385,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			const path = this.getTransitSignPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const base64Data = Buffer.from(data).toString("base64");
+			const base64Data = Converter.bytesToBase64(data);
 
 			const payload = {
 				input: base64Data
@@ -428,7 +424,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			const path = this.getTransitVerifyPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const base64Data = Buffer.from(data).toString("base64");
+			const base64Data = Converter.bytesToBase64(data);
 			const signatureString = Buffer.from(signature).toString("utf8");
 
 			const payload = {
@@ -467,18 +463,18 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 	): Promise<Uint8Array> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 		Guards.uint8Array(this.CLASS_NAME, nameof(data), data);
-		// Guards.arrayOneOf<VaultEncryptionType>(
-		// 	this.CLASS_NAME,
-		// 	nameof(encryptionType),
-		// 	encryptionType,
-		// 	Object.values(encryptionType)
-		// );
+		Guards.arrayOneOf<VaultEncryptionType>(
+			this.CLASS_NAME,
+			nameof(encryptionType),
+			encryptionType,
+			Object.values(VaultEncryptionType)
+		);
 
 		try {
 			const path = this.getTransitEncryptPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const base64ata = Buffer.from(data).toString("base64");
+			const base64ata = Converter.bytesToBase64(data);
 
 			const payload = {
 				plaintext: base64ata
@@ -491,12 +487,15 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			});
 
 			const jsonResponse = await response.json();
-			// eslint-disable-next-line no-console
-			console.log({ encrypt: jsonResponse });
+
+			if (jsonResponse?.data?.ciphertext) {
+				const { ciphertext } = jsonResponse.data;
+				return Uint8Array.from(Buffer.from(ciphertext));
+			}
+			throw new GeneralError(this.CLASS_NAME, "invalidEncryptResponse", { name, encryptionType });
 		} catch (err) {
 			throw new GeneralError(this.CLASS_NAME, "encryptDataFailed", { name, encryptionType }, err);
 		}
-		return new Uint8Array();
 	}
 
 	/**
@@ -507,11 +506,45 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 	 * @returns The decrypted data.
 	 */
 	public async decrypt(
-		// DECRYPT DATA
 		name: string,
 		encryptionType: VaultEncryptionType,
 		encryptedData: Uint8Array
 	): Promise<Uint8Array> {
+		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
+		Guards.uint8Array(this.CLASS_NAME, nameof(encryptedData), encryptedData);
+		Guards.arrayOneOf<VaultEncryptionType>(
+			this.CLASS_NAME,
+			nameof(encryptionType),
+			encryptionType,
+			Object.values(VaultEncryptionType)
+		);
+
+		try {
+			const path = this.getTransitDecryptPath(name);
+			const url = `${this._baseUrl}/${path}`;
+
+			const ciphertext = Buffer.from(encryptedData).toString("utf8");
+
+			const payload = {
+				ciphertext
+			};
+
+			const response = await fetch(url, {
+				method: "POST",
+				headers: this._headers,
+				body: JSON.stringify(payload)
+			});
+
+			const jsonResponse = await response.json();
+
+			if (jsonResponse?.data?.plaintext) {
+				const { plaintext } = jsonResponse.data;
+				const decodedPlaintext = Buffer.from(plaintext, "base64");
+				return Uint8Array.from(decodedPlaintext);
+			}
+		} catch (err) {
+			throw new GeneralError(this.CLASS_NAME, "decryptDataFailed", { name, encryptionType }, err);
+		}
 		return new Uint8Array();
 	}
 
@@ -536,9 +569,14 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 	 * Update the configuration of a key.
 	 * @param name The name of the key to update.
 	 * @param deletionAllowed Whether the key can be deleted.
+	 * @param exportable Whether the key can be exported.
 	 * @returns Nothing.
 	 */
-	public async updateKeyConfig(name: string, deletionAllowed: boolean): Promise<void> {
+	public async updateKeyConfig(
+		name: string,
+		deletionAllowed?: boolean,
+		exportable?: boolean
+	): Promise<void> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 
 		try {
@@ -546,7 +584,8 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			const url = `${this._baseUrl}/${path}`;
 
 			const payload = {
-				deletion_allowed: deletionAllowed // eslint-disable-line camelcase
+				deletion_allowed: deletionAllowed, // eslint-disable-line camelcase
+				exportable
 			};
 
 			await fetch(url, {
@@ -580,9 +619,6 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 			});
 
 			const jsonResponse = await response.json();
-
-			// eslint-disable-next-line no-console
-			console.log({ getPublicKey: jsonResponse });
 
 			if (jsonResponse?.data === undefined) {
 				throw new NotFoundError(this.CLASS_NAME, "publicKeyNotFound", name);
@@ -713,14 +749,12 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Export the private key from the vault.
 	 * @param name The name of the key.
-	 * @param type The type of the key.
 	 * @param version The version of the key. If omitted, all versions of the key will be returned.
 	 * @returns The private key as a Uint8Array.
 	 * @throws Error if the key cannot be exported or found.
 	 */
 	private async exportPrivateKey(
 		name: string,
-		type?: VaultKeyType,
 		version?: string
 	): Promise<{
 		/**
@@ -741,14 +775,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 		const versionPath = version ? `${version}` : "latest";
 
-		let keyType;
-		if (type && !this.isAsymmetricKeyType(type)) {
-			keyType = "encryption-key";
-		} else {
-			keyType = "signing-key";
-		}
-
-		const path = this.getTransitExportKeyPath(name, keyType);
+		const path = this.getTransitExportKeyPath(name, "signing-key");
 		const url = `${this._baseUrl}/${path}/${versionPath}`;
 
 		try {
@@ -914,7 +941,7 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Get the  paths for encrypting data with a Transit key.
+	 * Get the  path for encrypting data with a Transit key.
 	 * @param name The name of the key.
 	 * @returns The path for encryption.
 	 * @internal
@@ -923,10 +950,13 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 		return `${this._transitMountPath}/encrypt/${name}`;
 	}
 
-	// ! TODO:
-	// - Use the "Is" class to check for the type of the data. (Framework)
-	// - Check out the "Converter" class for converting data types. (Framework)
-	// - When running Docker make sure to enable transit for the vault. (Docker)
-	// - Use the Coerce where you are using (Number) to convert the string to a number. (Framework)
-	// - Look at the encoding folder in the Core package
+	/**
+	 * Get the  path for decrypting data with a Transit key.
+	 * @param name The name of the key.
+	 * @returns The path for decryption.
+	 * @internal
+	 */
+	private getTransitDecryptPath(name: string): string {
+		return `${this._transitMountPath}/decrypt/${name}`;
+	}
 }

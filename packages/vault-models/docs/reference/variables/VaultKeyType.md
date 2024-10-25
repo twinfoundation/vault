@@ -20,6 +20,6 @@ Secp256k1. (asymmetric)
 
 ### ChaCha20Poly1305
 
-> `readonly` **ChaCha20Poly1305**: `3` = `3`
+> `readonly` **ChaCha20Poly1305**: `2` = `2`
 
 The ChaCha20Poly1305. (symmetric)
