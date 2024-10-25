@@ -12,6 +12,15 @@ jobs:
     env:
       TEST_MNEMONIC: ${{ secrets.TEST_MNEMONIC }}
 
+    services:
+      vault:
+        image: hashicorp/vault
+        ports:
+          - 8200:8200
+        options: >-
+          --cap-add=IPC_LOCK
+          -e 'VAULT_DEV_ROOT_TOKEN_ID=root'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,14 +30,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Start Hashicorp Vault
-        run: |
-          docker run -d --name twin-entity-storage-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault
-
       - name: Wait for Vault to be ready
         run: |
           for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8200/v1/sys/health || echo "000")
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8200/v1/sys/health || echo "000")
             if [ "$STATUS" -eq 200 ]; then
               echo "Vault is ready"
               break
@@ -37,9 +42,18 @@ jobs:
             sleep 3
           done
 
-      - name: Enable Transit Secrets Engine inside Vault container
+      - name: Set Vault environment variables
         run: |
-          docker exec -e VAULT_ADDR='http://127.0.0.1:8200' -e VAULT_TOKEN='root' twin-entity-storage-vault vault secrets enable transit
+          echo "VAULT_ADDR=http://localhost:8200" >> $GITHUB_ENV
+          echo "VAULT_TOKEN=root" >> $GITHUB_ENV
+
+      - name: Enable Transit Secrets Engine via API
+        run: |
+          curl \
+            --header "X-Vault-Token: $VAULT_TOKEN" \
+            --request POST \
+            --data '{"type":"transit"}' \
+            $VAULT_ADDR/v1/sys/mounts/transit
 
       - name: Restore root node_modules from cache
         id: node-cache
