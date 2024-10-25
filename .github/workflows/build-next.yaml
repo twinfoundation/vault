@@ -25,13 +25,21 @@ jobs:
         run: |
           docker run -d --name twin-entity-storage-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault:1.18.0
 
-      - name: Setup Hashicorp Vault Transit Policy
+      - name: Wait for Vault to be ready
         run: |
-          curl \
-            --header "X-Vault-Token: root" \
-            --request POST \
-            --data '{"type":"transit"}' \
-            http://localhost:8200/v1/sys/mounts/transit
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8200/v1/sys/health)
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Vault is ready"
+              break
+            fi
+            echo "Waiting for Vault to be ready..."
+            sleep 3
+          done
+
+      - name: Enable Transit Secrets Engine inside Vault container
+        run: |
+          docker exec twin-entity-storage-vault vault secrets enable transit
 
       - name: Restore root node_modules from cache
         id: node-cache
