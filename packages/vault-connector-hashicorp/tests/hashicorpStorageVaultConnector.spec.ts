@@ -1,7 +1,8 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
-import { I18n, NotFoundError } from "@twin.org/core";
+import { AlreadyExistsError, I18n } from "@twin.org/core";
 import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models"; // remove this
+import { FetchError } from "@twin.org/web";
 import { cleanupKeys, cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
 import { HashicorpStorageVaultConnector } from "../src/hashicorpStorageVaultConnector";
 
@@ -24,13 +25,6 @@ describe("EntityStorageVaultConnector", () => {
 
 	afterEach(async () => {
 		await cleanupSecrets(["test-secret"]);
-		await cleanupKeys([
-			"test-key",
-			"test-restore-origin-key",
-			"test-restore-new-key",
-			"test-rename-origin-key",
-			"test-rename-new-key"
-		]);
 	});
 
 	test("can set and get a secret", async () => {
@@ -94,14 +88,18 @@ describe("EntityStorageVaultConnector", () => {
 		});
 	});
 
-	// test("can fail to create a key if it already exists", async () => {
-	// 	const keyName = "test-key";
-	// 	const keyType = VaultKeyType.Ed25519;
+	test("can fail to create a key if it already exists", async () => {
+		const keyName = "test-key";
+		const keyType = VaultKeyType.Ed25519;
 
-	// 	await vaultConnector.createKey(keyName, keyType);
+		await vaultConnector.createKey(keyName, keyType);
 
-	// 	await expect(vaultConnector.createKey(keyName, keyType)).rejects.toThrowError(AlreadyExistsError);
-	// });
+		await expect(vaultConnector.createKey(keyName, keyType)).rejects.toThrowError(
+			AlreadyExistsError
+		);
+
+		await cleanupKeys(["test-key"]);
+	});
 
 	test("can create and get key", async () => {
 		const keyName = "test-key";
@@ -116,6 +114,8 @@ describe("EntityStorageVaultConnector", () => {
 
 		expect(retrievedPublicKey).toEqual(publicKey);
 		expect(retrievedPublicKey.length).toBeGreaterThan(0);
+
+		await cleanupKeys(["test-key"]);
 	});
 
 	test("can update key configuration to allow deletion", async () => {
@@ -130,6 +130,8 @@ describe("EntityStorageVaultConnector", () => {
 
 		expect(deleteConfiguration).toBeDefined();
 		expect(deleteConfiguration).toEqual(true);
+
+		await cleanupKeys(["test-key"]);
 	});
 
 	test("can remove a key", async () => {
@@ -140,7 +142,7 @@ describe("EntityStorageVaultConnector", () => {
 
 		await vaultConnector.removeKey(keyName);
 
-		await expect(vaultConnector.getPublicKey(keyName)).rejects.toThrowError(NotFoundError);
+		await expect(vaultConnector.getPublicKey(keyName)).rejects.toThrowError(FetchError);
 	});
 
 	test("can backup a key", async () => {
@@ -154,6 +156,8 @@ describe("EntityStorageVaultConnector", () => {
 		expect(backup).toBeDefined();
 		expect(typeof backup).toBe("string");
 		expect(backup.length).toBeGreaterThan(0);
+
+		await cleanupKeys(["test-key"]);
 	});
 
 	test("can restore a key", async () => {
@@ -170,6 +174,8 @@ describe("EntityStorageVaultConnector", () => {
 
 		expect(getRestoredKey).toBeDefined();
 		expect(getOriginalKey).toEqual(getRestoredKey);
+
+		await cleanupKeys(["test-restore-origin-key", "test-restore-new-key"]);
 	});
 
 	test("can rename a key", async () => {
@@ -182,13 +188,15 @@ describe("EntityStorageVaultConnector", () => {
 		await vaultConnector.renameKey(originalKeyName, newKeyName);
 
 		// Verify the original key is removed
-		await expect(vaultConnector.getPublicKey(originalKeyName)).rejects.toThrowError(NotFoundError);
+		await expect(vaultConnector.getPublicKey(originalKeyName)).rejects.toThrowError(FetchError);
 
 		// Verify the renamed key exists
 		const renamedKey = await vaultConnector.getPublicKey(newKeyName);
 
 		expect(renamedKey).toBeDefined();
 		expect(renamedKey.length).toBeGreaterThan(0);
+
+		await cleanupKeys(["test-rename-new-key"]);
 	});
 
 	test("can get a key", async () => {
@@ -204,7 +212,9 @@ describe("EntityStorageVaultConnector", () => {
 		expect(retrievedKey.publicKey.length).toBeGreaterThan(0);
 		expect(retrievedKey.privateKey).toBeDefined();
 		expect(retrievedKey.privateKey.length).toBeGreaterThan(0);
-		expect(retrievedKey.type).toEqual("ed25519");
+		expect(retrievedKey.type).toEqual(keyType);
+
+		await cleanupKeys(["test-key"]);
 	});
 
 	test("can sign and verify data", async () => {
@@ -220,6 +230,8 @@ describe("EntityStorageVaultConnector", () => {
 		const isValid = await vaultConnector.verify(keyName, data, signature);
 
 		expect(isValid).toBe(true);
+
+		await cleanupKeys(["test-key"]);
 	});
 
 	test("can encrypt and decrypt data", async () => {
@@ -241,5 +253,7 @@ describe("EntityStorageVaultConnector", () => {
 		expect(decryptedData).toBeDefined();
 		expect(decryptedData.length).toBeGreaterThan(0);
 		expect(Buffer.from(decryptedData).toString()).toEqual("test-data");
+
+		await cleanupKeys(["test-key"]);
 	});
 });

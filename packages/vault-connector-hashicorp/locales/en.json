@@ -31,7 +31,8 @@
 			"unsupportedEncryptionType": "Unsupported encryption type \"{encryptionType}\"",
 			"decryptDataFailed": "Failed to decrypt data \"{name, encryptionType}\"",
 			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\"",
-			"keyAlreadyExists": "Key \"{name}\" already exists"
+			"keyAlreadyExists": "Key \"{name}\" already exists",
+			"invalidReadKeyResponse": "Invalid read key response \"{name}\""
 		}
 	}
 }
