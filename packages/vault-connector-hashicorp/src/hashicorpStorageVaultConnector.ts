@@ -254,16 +254,16 @@ export class HashicorpStorageVaultConnector implements IVaultConnector {
 		const url = `${this._baseUrl}/${path}`;
 
 		try {
-            // Check if the key exists
-            const existingVaultKey = await this.readKey(name);
+			// Check if the key exists
+			const existingVaultKey = await this.readKey(name);
 			if (existingVaultKey) {
 				throw new AlreadyExistsError(this.CLASS_NAME, "keyAlreadyExists", name);
 			}
-        } catch (err) {
-            if (!(err instanceof FetchError && err.properties?.httpStatus === 404)) {
-                throw err;
-            }
-        }
+		} catch (err) {
+			if (!(err instanceof FetchError && err.properties?.httpStatus === 404)) {
+				throw err;
+			}
+		}
 
 		try {
 			const vaultKeyType = this.mapVaultKeyType(type);
