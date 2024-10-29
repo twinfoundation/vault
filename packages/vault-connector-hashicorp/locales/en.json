@@ -1,11 +1,11 @@
 {
 	"info": {
-		"hashicorpStorageVault": {
+		"hashicorpVaultConnector": {
 			"hashicorpVaultConnected": "Connected to Hashicorp Vault"
 		}
 	},
 	"error": {
-		"hashicorpStorageVault": {
+		"hashicorpVaultConnector": {
 			"setSecretFailed": "Failed to set secret \"{name}\"",
 			"removeSecretFailed": "Failed to remove secret \"{name}\"",
 			"getSecretVersionsFailed": "Failed to get secret versions \"{name}\"",
@@ -16,7 +16,7 @@
 			"publicKeyNotFound": "Public key \"{name}\" not found",
 			"removeKeyFailed": "Failed to remove key \"{name}\"",
 			"updateKeyConfigFailed": "Failed to update key config \"{name}\"",
-			"addKeyNotSupported": "Adding keys is not supported",
+			"addKeyNotSupported": "Adding (asymmetric) keys is not supported by HashiCorp Vault's Transit Secrets Engine. Please generate keys within Vault. For more information, refer to HashiCorp's [Transit Secrets Engine Documentation](https://www.vaultproject.io/docs/secrets/transit).",
 			"backupKeyNotFound": "Backup key \"{name}\" not found",
 			"backupKeyFailed": "Failed to backup key \"{name}\"",
 			"restoreKeyFailed": "Failed to restore key \"{name}\"",
@@ -32,7 +32,8 @@
 			"decryptDataFailed": "Failed to decrypt data \"{name, encryptionType}\"",
 			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\"",
 			"keyAlreadyExists": "Key \"{name}\" already exists",
-			"invalidReadKeyResponse": "Invalid read key response \"{name}\""
+			"invalidReadKeyResponse": "Invalid read key response \"{name}\"",
+			"renameKeyFailed": "Failed to rename key \"{name}\""
 		}
 	}
 }

@@ -12,7 +12,7 @@ import {
 import { LoggingConnectorFactory } from "@twin.org/logging-models";
 import { nameof } from "@twin.org/nameof";
 import { type IVaultConnector, VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
-import { FetchError, FetchHelper, HttpMethod } from "@twin.org/web";
+import { FetchError, FetchHelper, HttpMethod, type IHttpHeaders } from "@twin.org/web";
 import type { IBackupKeyResponse } from "./models/IBackupKeyResponse";
 import type { ICreateKeyRequest } from "./models/ICreateKeyRequest";
 import type { IDecryptDataRequest } from "./models/IDecryptDataRequest";
@@ -77,7 +77,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * The headers for the requests.
 	 * @internal
 	 */
-	private readonly _headers: { [key: string]: string };
+	private readonly _headers: IHttpHeaders;
 
 	/**
 	 * Create a new instance of HashicorpStorageVaultConnector.
@@ -99,8 +99,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		this._transitMountPath = this._config.transitMountPath ?? "transit";
 		this._baseUrl = `${this._config.endpoint}/v1`;
 		this._headers = {
-			"X-Vault-Token": this._config.token,
-			"Content-Type": "application/json"
+			"X-Vault-Token": this._config.token
 		};
 	}
 
@@ -478,12 +477,15 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			>(this.CLASS_NAME, url, HttpMethod.POST, payload, { headers: this._headers });
 
 			if (response?.data?.signature) {
-				const signature = response.data.signature;
-				// eslint-disable-next-line no-console
-				console.log(response.data.signature);
-				// eslint-disable-next-line no-console
-				console.log(Buffer.from(signature));
-				return Buffer.from(signature);
+				const signatureString = response.data.signature;
+
+				const prefix = "vault:v1:";
+				const cleanedSignature = signatureString.startsWith(prefix)
+					? signatureString.slice(prefix.length)
+					: signatureString;
+
+				const signatureBytes = Converter.base64ToBytes(cleanedSignature);
+				return signatureBytes;
 			}
 			throw new GeneralError(this.CLASS_NAME, "invalidSignResponse", { name });
 		} catch (err) {
@@ -514,11 +516,14 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const url = `${this._baseUrl}/${path}`;
 
 			const base64Data = Converter.bytesToBase64(data);
-			const signatureString = Converter.bytesToUtf8(signature);
+			const signatureBase64 = Converter.bytesToBase64(signature);
+
+			const prefix = "vault:v1:";
+			const prefixedSignature = `${prefix}${signatureBase64}`;
 
 			const payload = {
 				input: base64Data,
-				signature: signatureString
+				signature: prefixedSignature
 			};
 
 			const response = await FetchHelper.fetchJson<
@@ -580,7 +585,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 
 			if (response?.data?.ciphertext) {
 				const { ciphertext } = response.data;
-				return Uint8Array.from(Buffer.from(ciphertext));
+				return Converter.utf8ToBytes(ciphertext);
 			}
 			throw new GeneralError(this.CLASS_NAME, "invalidEncryptResponse", { name, encryptionType });
 		} catch (err) {
@@ -619,7 +624,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const path = this.getTransitDecryptPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const ciphertext = Buffer.from(encryptedData).toString("utf8");
+			const ciphertext = Converter.bytesToUtf8(encryptedData);
 
 			const payload = {
 				ciphertext
@@ -716,8 +721,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 				const { keys } = response.data;
 				const keyVersion = Object.keys(keys)[0];
 				const publicKeyBase64 = keys[keyVersion];
-				const publicKey = Converter.base64ToBytes(publicKeyBase64);
-				return Uint8Array.from(publicKey);
+				return Converter.base64ToBytes(publicKeyBase64);
 			}
 
 			throw new NotFoundError(this.CLASS_NAME, "publicKeyNotFound", name);

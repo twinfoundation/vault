@@ -1,7 +1,7 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
 import { AlreadyExistsError, I18n } from "@twin.org/core";
-import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models"; // remove this
+import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
 import { FetchError } from "@twin.org/web";
 import { cleanupKeys, cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
 import { HashicorpVaultConnector } from "../src/hashicorpVaultConnector";
@@ -29,6 +29,7 @@ describe("HashicorpVaultConnector", () => {
 		});
 
 		expect(vaultConnectorHealth).toBeDefined();
+		expect(I18n.hasMessage("info.hashicorpVaultConnector.hashicorpVaultConnected")).toEqual(true);
 	});
 
 	test("can fail to store a secret with no secret name", async () => {
@@ -341,6 +342,7 @@ describe("HashicorpVaultConnector", () => {
 	test("can fail to rename a key if it doesn't exist", async () => {
 		await expect(vaultConnector.renameKey(TEST_KEY_NAME, "foo")).rejects.toMatchObject({
 			name: "GeneralError",
+			message: "hashicorpVaultConnector.renameKeyFailed",
 			properties: {
 				name: TEST_KEY_NAME,
 				newName: "foo"
