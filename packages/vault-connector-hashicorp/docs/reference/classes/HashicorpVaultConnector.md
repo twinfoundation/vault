@@ -1,4 +1,4 @@
-# Class: HashicorpStorageVaultConnector
+# Class: HashicorpVaultConnector
 
 Class for performing vault operations in entity storage.
 
@@ -8,9 +8,9 @@ Class for performing vault operations in entity storage.
 
 ## Constructors
 
-### new HashicorpStorageVaultConnector()
+### new HashicorpVaultConnector()
 
-> **new HashicorpStorageVaultConnector**(`options`): [`HashicorpStorageVaultConnector`](HashicorpStorageVaultConnector.md)
+> **new HashicorpVaultConnector**(`options`): [`HashicorpVaultConnector`](HashicorpVaultConnector.md)
 
 Create a new instance of HashicorpStorageVaultConnector.
 
@@ -26,7 +26,7 @@ The configuration for the Hashicorp Vault connector.
 
 #### Returns
 
-[`HashicorpStorageVaultConnector`](HashicorpStorageVaultConnector.md)
+[`HashicorpVaultConnector`](HashicorpVaultConnector.md)
 
 ## Properties
 

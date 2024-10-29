@@ -3,7 +3,7 @@
 import path from "node:path";
 import { Guards } from "@twin.org/core";
 import * as dotenv from "dotenv";
-import { HashicorpStorageVaultConnector } from "../src/hashicorpStorageVaultConnector";
+import { HashicorpVaultConnector } from "../src/hashicorpVaultConnector";
 import type { IHashicorpVaultConnectorConfig } from "../src/models/IHashicorpVaultConnectorConfig";
 
 dotenv.config({ path: [path.join(__dirname, ".env"), path.join(__dirname, ".env.dev")] });
@@ -27,7 +27,7 @@ export const TEST_VAULT_CONFIG: IHashicorpVaultConnectorConfig = {
  * @param secretNames - The names of the secrets to clean up.
  */
 export async function cleanupSecrets(secretNames: string[]): Promise<void> {
-	const vaultConnector = new HashicorpStorageVaultConnector({
+	const vaultConnector = new HashicorpVaultConnector({
 		config: TEST_VAULT_CONFIG
 	});
 	await vaultConnector.bootstrap();
@@ -48,7 +48,7 @@ export async function cleanupSecrets(secretNames: string[]): Promise<void> {
  * @param keyNames - The names of the keys to clean up.
  */
 export async function cleanupKeys(keyNames: string[]): Promise<void> {
-	const vaultConnector = new HashicorpStorageVaultConnector({
+	const vaultConnector = new HashicorpVaultConnector({
 		config: TEST_VAULT_CONFIG
 	});
 	await vaultConnector.bootstrap();

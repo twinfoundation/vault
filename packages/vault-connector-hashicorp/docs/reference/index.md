@@ -2,7 +2,7 @@
 
 ## Classes
 
-- [HashicorpStorageVaultConnector](classes/HashicorpStorageVaultConnector.md)
+- [HashicorpVaultConnector](classes/HashicorpVaultConnector.md)
 
 ## Interfaces
 
