@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0.
 
 /**
- * Represents the response received when fetching the versions of a secret.
+ * Represents the response received when fetching the versions of a secret from vault.
  */
 export interface ISecretVersionResponse {
 	/**
