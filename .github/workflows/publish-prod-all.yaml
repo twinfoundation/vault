@@ -10,10 +10,20 @@ jobs:
 
     if: github.ref == 'refs/heads/main'
 
+    services:
+      vault:
+        image: hashicorp/vault:1.18.0
+        ports:
+          - 8200:8200
+        env:
+          VAULT_DEV_ROOT_TOKEN_ID: root
+        options: >-
+          --cap-add=IPC_LOCK
+
     strategy:
       max-parallel: 1
       matrix:
-        package: [vault-models, vault-connector-entity-storage]
+        package: [vault-models, vault-connector-entity-storage, vault-connector-hashicorp]
 
     steps:
       - name: Checkout
@@ -26,6 +36,19 @@ jobs:
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Set Vault environment variables
+        run: |
+          echo "VAULT_ADDR=http://localhost:8200" >> $GITHUB_ENV
+          echo "VAULT_TOKEN=root" >> $GITHUB_ENV
+
+      - name: Enable Transit Secrets Engine via API
+        run: |
+          curl \
+            --header "X-Vault-Token: $VAULT_TOKEN" \
+            --request POST \
+            --data '{"type":"transit"}' \
+            $VAULT_ADDR/v1/sys/mounts/transit
 
       - name: Remove Mono-Repo Node Modules
         run: |

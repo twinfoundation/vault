@@ -40,7 +40,8 @@ export default {
 			.join(''),
 		compact: false,
 		exports: 'auto',
-		globals: globs
+		globals: globs,
+		exports: 'named'
 	},
 	external: [/^node:.*/].concat(Object.keys(globs).map(g => new RegExp(`^${g}`))),
 	onwarn: message => {

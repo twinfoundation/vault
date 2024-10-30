@@ -1,0 +1,39 @@
+{
+	"info": {
+		"hashicorpVaultConnector": {
+			"hashicorpVaultConnected": "Connected to Hashicorp Vault"
+		}
+	},
+	"error": {
+		"hashicorpVaultConnector": {
+			"setSecretFailed": "Failed to set secret \"{name}\"",
+			"removeSecretFailed": "Failed to remove secret \"{name}\"",
+			"getSecretVersionsFailed": "Failed to get secret versions \"{name}\"",
+			"hashicorpVaultConnectionFailed": "Failed to connect to Hashicorp Vault",
+			"createdKeyFailed": "Failed to create key \"{name, type}\"",
+			"unsupportedKeyType": "Unsupported key type \"{type}\"",
+			"exportPublicKeyFailed": "Failed to export public key \"{name}\"",
+			"publicKeyNotFound": "Public key \"{name}\" not found",
+			"removeKeyFailed": "Failed to remove key \"{name}\"",
+			"updateKeyConfigFailed": "Failed to update key config \"{name}\"",
+			"addKeyNotSupported": "Adding (asymmetric) keys is not supported by HashiCorp Vault's Transit Secrets Engine. Please generate keys within Vault. For more information, refer to HashiCorp's [Transit Secrets Engine Documentation](https://www.vaultproject.io/docs/secrets/transit).",
+			"backupKeyNotFound": "Backup key \"{name}\" not found",
+			"backupKeyFailed": "Failed to backup key \"{name}\"",
+			"restoreKeyFailed": "Failed to restore key \"{name}\"",
+			"exportPrivateKeyFailed": "Failed to export private key \"{name}\"",
+			"privateKeyNotFound": "Private key \"{name}\" not found",
+			"getKeyFailed": "Failed to get key \"{name}\"",
+			"signDataFailed": "Failed to sign data \"{name}\"",
+			"invalidSignResponse": "Invalid sign response \"{name}\"",
+			"verifyDataFailed": "Failed to verify data \"{name}\"",
+			"invalidSignature": "Invalid signature \"{name}\"",
+			"encryptDataFailed": "Failed to encrypt data \"{name, encryptionType}\"",
+			"unsupportedEncryptionType": "Unsupported encryption type \"{encryptionType}\"",
+			"decryptDataFailed": "Failed to decrypt data \"{name, encryptionType}\"",
+			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\"",
+			"keyAlreadyExists": "Key \"{name}\" already exists",
+			"invalidReadKeyResponse": "Invalid read key response \"{name}\"",
+			"renameKeyFailed": "Failed to rename key \"{name}\""
+		}
+	}
+}

@@ -12,6 +12,16 @@ jobs:
     env:
       TEST_MNEMONIC: ${{ secrets.TEST_MNEMONIC }}
 
+    services:
+      vault:
+        image: hashicorp/vault:1.18.0
+        ports:
+          - 8200:8200
+        env:
+          VAULT_DEV_ROOT_TOKEN_ID: root
+        options: >-
+          --cap-add=IPC_LOCK
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,6 +30,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Set Vault environment variables
+        run: |
+          echo "VAULT_ADDR=http://localhost:8200" >> $GITHUB_ENV
+          echo "VAULT_TOKEN=root" >> $GITHUB_ENV
+
+      - name: Enable Transit Secrets Engine via API
+        run: |
+          curl \
+            --header "X-Vault-Token: $VAULT_TOKEN" \
+            --request POST \
+            --data '{"type":"transit"}' \
+            $VAULT_ADDR/v1/sys/mounts/transit
 
       - name: Restore root node_modules from cache
         id: node-cache
