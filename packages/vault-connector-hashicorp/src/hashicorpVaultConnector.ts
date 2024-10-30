@@ -22,7 +22,7 @@ import type { IEncryptDataResponse } from "./models/IEncryptDataResponse";
 import type { IExportPrivateKeyResponse } from "./models/IExportPrivateKeyResponse";
 import type { IGetPublicKeyResponse } from "./models/IGetPublicKeyResponse";
 import type { IHashicorpVaultConnectorConfig } from "./models/IHashicorpVaultConnectorConfig";
-import type { IHashicorpVaultRequest } from "./models/IHashicorpVaultRequest";
+import type { IHashicorpVaultRequest } from "./models/IHashicorpVaultRequests";
 import type { IHashicorpVaultResponse } from "./models/IHashicorpVaultResponse";
 import type { IKeyDeleteConfigResponse } from "./models/IKeyDeleteConfigResponse";
 import type { IReadKeyResponse } from "./models/IReadKeyResponse";
