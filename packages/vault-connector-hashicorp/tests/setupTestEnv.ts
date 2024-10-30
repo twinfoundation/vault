@@ -14,12 +14,14 @@ Guards.stringValue("TestEnv", "VAULT_ADDRESS", process.env.VAULT_ADDRESS);
 Guards.stringValue("TestEnv", "VAULT_TOKEN", process.env.VAULT_TOKEN);
 Guards.stringValue("TestEnv", "VAULT_KV_MOUNT_PATH", process.env.VAULT_KV_MOUNT_PATH);
 Guards.stringValue("TestEnv", "VAULT_TRANSIT_MOUNT_PATH", process.env.VAULT_TRANSIT_MOUNT_PATH);
+Guards.stringValue("TestEnv", "VAULT_API_VERSION", process.env.VAULT_API_VERSION);
 
 export const TEST_VAULT_CONFIG: IHashicorpVaultConnectorConfig = {
 	endpoint: process.env.VAULT_ADDRESS ?? "http://localhost:8200",
 	token: process.env.VAULT_TOKEN ?? "root",
 	kvMountPath: process.env.VAULT_KV_MOUNT_PATH ?? "secret",
-	transitMountPath: process.env.VAULT_TRANSIT_MOUNT_PATH ?? "transit"
+	transitMountPath: process.env.VAULT_TRANSIT_MOUNT_PATH ?? "transit",
+	apiVersion: process.env.VAULT_API_VERSION ?? "v1"
 };
 
 /**

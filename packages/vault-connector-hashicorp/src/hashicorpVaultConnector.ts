@@ -22,7 +22,7 @@ import type { IEncryptDataResponse } from "./models/IEncryptDataResponse";
 import type { IExportPrivateKeyResponse } from "./models/IExportPrivateKeyResponse";
 import type { IGetPublicKeyResponse } from "./models/IGetPublicKeyResponse";
 import type { IHashicorpVaultConnectorConfig } from "./models/IHashicorpVaultConnectorConfig";
-import type { IHashicorpVaultRequest } from "./models/IhashicorpVaultRequest";
+import type { IHashicorpVaultRequest } from "./models/IHashicorpVaultRequest";
 import type { IHashicorpVaultResponse } from "./models/IHashicorpVaultResponse";
 import type { IKeyDeleteConfigResponse } from "./models/IKeyDeleteConfigResponse";
 import type { IReadKeyResponse } from "./models/IReadKeyResponse";
@@ -97,7 +97,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		this._config = options.config;
 		this._kvMountPath = this._config.kvMountPath ?? "secret";
 		this._transitMountPath = this._config.transitMountPath ?? "transit";
-		this._baseUrl = `${this._config.endpoint}/v1`;
+		this._baseUrl = `${this._config.endpoint}/${this._config.apiVersion ?? "v1"}`;
 		this._headers = {
 			"X-Vault-Token": this._config.token
 		};
@@ -301,7 +301,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 
 			// If the key is symmetric, return the private key
 			const symmetricKey = await this.backupKey(name);
-			const privateKey = Uint8Array.from(Buffer.from(symmetricKey, "base64"));
+			const privateKey = Converter.base64ToBytes(symmetricKey);
 			return privateKey;
 		} catch (err) {
 			if (err instanceof AlreadyExistsError) {
@@ -347,6 +347,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		privateKey: Uint8Array,
 		publicKey: Uint8Array
 	): Promise<void> {
+		// Adding (asymmetric) keys is not supported by HashiCorp Vault's Transit Secrets Engine. Please generate keys within Vault. For more information, refer to HashiCorp's [Transit Secrets Engine Documentation](https://www.vaultproject.io/docs/secrets/transit).
 		throw new NotSupportedError(this.CLASS_NAME, "addKeyNotSupported");
 	}
 
@@ -717,8 +718,9 @@ export class HashicorpVaultConnector implements IVaultConnector {
 				IHashicorpVaultResponse<IGetPublicKeyResponse>
 			>(this.CLASS_NAME, url, HttpMethod.GET, undefined, { headers: this._headers });
 
-			if (response?.data?.keys[1]) {
-				const { keys } = response.data;
+			const { keys } = response.data;
+
+			if (keys && Object.keys(keys).length > 0) {
 				const keyVersion = Object.keys(keys)[0];
 				const publicKeyBase64 = keys[keyVersion];
 				return Converter.base64ToBytes(publicKeyBase64);

@@ -1,6 +1,7 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
 import { AlreadyExistsError, I18n } from "@twin.org/core";
+import { Ed25519 } from "@twin.org/crypto";
 import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
 import { FetchError } from "@twin.org/web";
 import { cleanupKeys, cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
@@ -384,11 +385,11 @@ describe("HashicorpVaultConnector", () => {
 		await cleanupKeys(["test-key"]);
 	});
 
-	test("can verify siganture with a key", async () => {
+	test("can verify signature with a key", async () => {
 		const keyName = "test-key";
 		const keyType = VaultKeyType.Ed25519;
 
-		await vaultConnector.createKey(keyName, keyType);
+		const publicKey = await vaultConnector.createKey(keyName, keyType);
 
 		const dataToSign = new Uint8Array([1, 2, 3, 4, 5]);
 
@@ -397,6 +398,7 @@ describe("HashicorpVaultConnector", () => {
 		const isVerified = await vaultConnector.verify(keyName, dataToSign, signature);
 
 		expect(isVerified).toBe(true);
+		expect(Ed25519.verify(publicKey, dataToSign, signature)).toBe(true);
 
 		await cleanupKeys(["test-key"]);
 	});
