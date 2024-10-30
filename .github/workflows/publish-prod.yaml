@@ -10,6 +10,7 @@ on:
         options:
           - vault-models
           - vault-connector-entity-storage
+          - vault-connector-hashicorp
 jobs:
   publish:
     runs-on: ubuntu-latest

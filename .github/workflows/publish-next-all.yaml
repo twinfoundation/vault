@@ -23,7 +23,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        package: [vault-models, vault-connector-entity-storage]
+        package: [vault-models, vault-connector-entity-storage, vault-connector-hashicorp]
 
     steps:
       - name: Checkout
