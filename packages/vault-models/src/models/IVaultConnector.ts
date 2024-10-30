@@ -21,20 +21,20 @@ export interface IVaultConnector extends IComponent {
 	 * @param name The name of the key to add to the vault.
 	 * @param type The type of key to add.
 	 * @param privateKey The private key.
-	 * @param publicKey The public key.
+	 * @param publicKey The public key, can be undefined if the key type is symmetric.
 	 * @returns Nothing.
 	 */
 	addKey(
 		name: string,
 		type: VaultKeyType,
 		privateKey: Uint8Array,
-		publicKey: Uint8Array
+		publicKey?: Uint8Array
 	): Promise<void>;
 
 	/**
 	 * Get a key from the vault.
 	 * @param name The name of the key to get from the vault.
-	 * @returns The key.
+	 * @returns The key, publicKey can be undefined if key is symmetric.
 	 */
 	getKey(name: string): Promise<{
 		/**
@@ -48,9 +48,9 @@ export interface IVaultConnector extends IComponent {
 		privateKey: Uint8Array;
 
 		/**
-		 * The public key.
+		 * The public key, which can be undefined if key type is symmetric.
 		 */
-		publicKey: Uint8Array;
+		publicKey?: Uint8Array;
 	}>;
 
 	/**

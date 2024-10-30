@@ -592,9 +592,8 @@ describe("EntityStorageVaultConnector", () => {
 	test("can encrypt with a key", async () => {
 		await vaultKeyEntityStorageConnector.set({
 			id: TEST_KEY_NAME,
-			type: VaultKeyType.Ed25519,
-			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+			type: VaultKeyType.ChaCha20Poly1305,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag="
 		});
 
 		const vaultConnector = new EntityStorageVaultConnector();
@@ -681,9 +680,8 @@ describe("EntityStorageVaultConnector", () => {
 	test("can decrypt with a key", async () => {
 		await vaultKeyEntityStorageConnector.set({
 			id: TEST_KEY_NAME,
-			type: VaultKeyType.Ed25519,
-			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag=",
-			publicKey: "KylrGqIEfx7mRdQKNhu+o0l0MU/WilWkOQ2YhkhYC5Y="
+			type: VaultKeyType.ChaCha20Poly1305,
+			privateKey: "vOpvrUcuiDJF09hoe9AWa4OUqcNqr6RpGOuj/A57gag="
 		});
 
 		const vaultConnector = new EntityStorageVaultConnector();

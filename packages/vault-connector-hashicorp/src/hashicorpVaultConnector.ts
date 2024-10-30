@@ -19,8 +19,7 @@ import type { IDecryptDataRequest } from "./models/IDecryptDataRequest";
 import type { IDecryptDataResponse } from "./models/IDecryptDataResponse";
 import type { IEncryptDataRequest } from "./models/IEncryptDataRequest";
 import type { IEncryptDataResponse } from "./models/IEncryptDataResponse";
-import type { IExportPrivateKeyResponse } from "./models/IExportPrivateKeyResponse";
-import type { IGetPublicKeyResponse } from "./models/IGetPublicKeyResponse";
+import type { IExportKeyResponse } from "./models/IExportKeyResponse";
 import type { IHashicorpVaultConnectorConfig } from "./models/IHashicorpVaultConnectorConfig";
 import type { IHashicorpVaultRequest } from "./models/IHashicorpVaultRequest";
 import type { IHashicorpVaultResponse } from "./models/IHashicorpVaultResponse";
@@ -295,14 +294,13 @@ export class HashicorpVaultConnector implements IVaultConnector {
 
 			// If the key is asymmetric, return the public key
 			if (this.isAsymmetricKeyType(type)) {
-				const publicKey = await this.getPublicKey(name);
-				return publicKey;
+				const publicKey = await this.exportKey(name, "public-key");
+				return publicKey.key;
 			}
 
-			// If the key is symmetric, return the private key
-			const symmetricKey = await this.backupKey(name);
-			const privateKey = Converter.base64ToBytes(symmetricKey);
-			return privateKey;
+			// If the key is symmetric, return the encryption key
+			const symmetricKey = await this.exportKey(name, "encryption-key");
+			return symmetricKey.key;
 		} catch (err) {
 			if (err instanceof AlreadyExistsError) {
 				throw err;
@@ -338,14 +336,14 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @param name The name of the key to add.
 	 * @param type The type of the key to add.
 	 * @param privateKey The private key to add.
-	 * @param publicKey The public key to add.
+	 * @param publicKey The public key, can be undefined if the key type is symmetric.
 	 * @returns Nothing.
 	 */
 	public async addKey(
 		name: string,
 		type: VaultKeyType,
 		privateKey: Uint8Array,
-		publicKey: Uint8Array
+		publicKey?: Uint8Array
 	): Promise<void> {
 		// Adding (asymmetric) keys is not supported by HashiCorp Vault's Transit Secrets Engine. Please generate keys within Vault. For more information, refer to HashiCorp's [Transit Secrets Engine Documentation](https://www.vaultproject.io/docs/secrets/transit).
 		throw new NotSupportedError(this.CLASS_NAME, "addKeyNotSupported");
@@ -354,7 +352,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	/**
 	 * Get a key from the vault.
 	 * @param name The name of the key to get.
-	 * @returns The key.
+	 * @returns The key, publicKey can be undefined if key is symmetric.
 	 */
 	public async getKey(name: string): Promise<{
 		/**
@@ -368,23 +366,33 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		privateKey: Uint8Array;
 
 		/**
-		 * The public key.
+		 * The public key, which can be undefined if key type is symmetric.
 		 */
-		publicKey: Uint8Array;
+		publicKey?: Uint8Array;
 	}> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 
+		let keyDetails;
 		try {
-			await this.readKey(name);
+			keyDetails = await this.readKey(name);
 		} catch (err) {
 			throw new NotFoundError(this.CLASS_NAME, "keyNotFound", name, err);
 		}
 
 		try {
-			const publicKey = await this.getPublicKey(name);
-			const privateKeyData = await this.exportPrivateKey(name);
-			const type = privateKeyData.type;
-			const privateKey = privateKeyData.privateKey;
+			let publicKey: Uint8Array | undefined;
+			let privateKey: Uint8Array | undefined;
+
+			const type = this.mapHashicorpKeyType(keyDetails.type);
+			if (this.isAsymmetricKeyType(type)) {
+				const privateKeyData = await this.exportKey(name, "signing-key");
+				privateKey = privateKeyData.key;
+				const publicKeyData = await this.exportKey(name, "public-key");
+				publicKey = publicKeyData.key;
+			} else {
+				const privateKeyData = await this.exportKey(name, "encryption-key");
+				privateKey = privateKeyData.key;
+			}
 
 			return {
 				type,
@@ -563,8 +571,23 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		);
 		Guards.uint8Array(this.CLASS_NAME, nameof(data), data);
 
+		let keyDetails;
 		try {
-			await this.readKey(name);
+			keyDetails = await this.readKey(name);
+		} catch (err) {
+			throw new NotFoundError(this.CLASS_NAME, "keyNotFound", name, err);
+		}
+
+		try {
+			if (
+				encryptionType === VaultEncryptionType.ChaCha20Poly1305 &&
+				keyDetails.type !== this.mapVaultKeyType(VaultKeyType.ChaCha20Poly1305)
+			) {
+				throw new GeneralError(this.CLASS_NAME, "keyTypeMismatch", {
+					encryptionType,
+					keyType: keyDetails.type
+				});
+			}
 		} catch (err) {
 			throw new NotFoundError(this.CLASS_NAME, "keyNotFound", name, err);
 		}
@@ -640,10 +663,11 @@ export class HashicorpVaultConnector implements IVaultConnector {
 				const { plaintext } = response.data;
 				return Converter.base64ToBytes(plaintext);
 			}
+
+			throw new GeneralError(this.CLASS_NAME, "decryptDataFailed", { name, encryptionType });
 		} catch (err) {
 			throw new GeneralError(this.CLASS_NAME, "decryptDataFailed", { name, encryptionType }, err);
 		}
-		return new Uint8Array();
 	}
 
 	/**
@@ -695,43 +719,6 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			);
 		} catch (err) {
 			throw new GeneralError(this.CLASS_NAME, "updateKeyConfigFailed", { name }, err);
-		}
-	}
-
-	/**
-	 * Export the public key from the vault.
-	 * @param name The name of the key.
-	 * @param version The version of the key. If omitted, the latest version of the key will be returned.
-	 * @returns The public key as a Uint8Array.
-	 * @throws Error if the key cannot be exported or found.
-	 */
-	public async getPublicKey(name: string, version?: string): Promise<Uint8Array> {
-		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		const versionPath = version ? `${version}` : "latest";
-
-		const path = this.getTransitExportKeyPath(name, "public-key");
-		const url = `${this._baseUrl}/${path}/${versionPath}`;
-
-		try {
-			const response = await FetchHelper.fetchJson<
-				never,
-				IHashicorpVaultResponse<IGetPublicKeyResponse>
-			>(this.CLASS_NAME, url, HttpMethod.GET, undefined, { headers: this._headers });
-
-			const { keys } = response.data;
-
-			if (keys && Object.keys(keys).length > 0) {
-				const keyVersion = Object.keys(keys)[0];
-				const publicKeyBase64 = keys[keyVersion];
-				return Converter.base64ToBytes(publicKeyBase64);
-			}
-
-			throw new NotFoundError(this.CLASS_NAME, "publicKeyNotFound", name);
-		} catch (err) {
-			if (err instanceof FetchError) {
-				throw err;
-			}
-			throw new GeneralError(this.CLASS_NAME, "exportPublicKeyFailed", { name }, err);
 		}
 	}
 
@@ -797,17 +784,77 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Read key information from the vault.
+	 * Export the key from the vault.
 	 * @param name The name of the key.
-	 * @returns An object containing key information.
-	 * @internal
+	 * @param keyPath The path of the key. Defaults to "signing-key".
+	 * @param version The version of the key. If omitted, all versions of the key will be returned.
+	 * @returns The key details.
+	 * @throws Error if the key cannot be exported or found.
 	 */
-	private async readKey(name: string): Promise<{
+	public async exportKey(
+		name: string,
+		keyPath: "signing-key" | "encryption-key" | "public-key",
+		version?: string
+	): Promise<{
+		/**
+		 * The type of the key e.g. Ed25519, Secp256k1.
+		 */
+		type: VaultKeyType;
+
+		/**
+		 * The key.
+		 */
+		key: Uint8Array;
+
 		/**
 		 * The name of the key.
 		 */
 		name: string;
 	}> {
+		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
+		const versionPath = version ? `${version}` : "latest";
+
+		const path = this.getTransitExportKeyPath(name, keyPath);
+		const url = `${this._baseUrl}/${path}/${versionPath}`;
+
+		try {
+			const response = await FetchHelper.fetchJson<
+				never,
+				IHashicorpVaultResponse<IExportKeyResponse>
+			>(this.CLASS_NAME, url, HttpMethod.GET, undefined, { headers: this._headers });
+
+			if (response?.data) {
+				const { keys } = response.data;
+				const keyVersion = Object.keys(keys)[0];
+				const keyBase64 = keys[keyVersion];
+				const key = Converter.base64ToBytes(keyBase64);
+
+				const type = this.mapHashicorpKeyType(response?.data?.type);
+
+				const keyData = {
+					type,
+					key,
+					name: response?.data?.name
+				};
+				return keyData;
+			}
+
+			throw new NotFoundError(this.CLASS_NAME, "exportKeyNotFound", name);
+		} catch (err) {
+			if (err instanceof NotFoundError) {
+				throw err;
+			}
+			throw new GeneralError(this.CLASS_NAME, "exportKeyFailed", { name, keyPath }, err);
+		}
+	}
+
+	/**
+	 * Read key information from the vault.
+	 * @param name The name of the key.
+	 * @returns An object containing key information.
+	 * @internal
+	 */
+	private async readKey(name: string): Promise<IReadKeyResponse> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 
 		const path = this.getTransitKeyPath(name);
@@ -821,7 +868,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 
 			if (response?.data?.name) {
 				const keyName = response.data.name;
-				return { name: keyName };
+				return { name: keyName, type: response.data.type };
 			}
 			throw new NotFoundError(this.CLASS_NAME, "keyNotFound", name);
 		} catch (err) {
@@ -885,69 +932,6 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Export the private key from the vault.
-	 * @param name The name of the key.
-	 * @param version The version of the key. If omitted, all versions of the key will be returned.
-	 * @returns The private key as a Uint8Array.
-	 * @throws Error if the key cannot be exported or found.
-	 */
-	private async exportPrivateKey(
-		name: string,
-		version?: string
-	): Promise<{
-		/**
-		 * The type of the key e.g. Ed25519, Secp256k1.
-		 */
-		type: VaultKeyType;
-
-		/**
-		 * The private key.
-		 */
-		privateKey: Uint8Array;
-
-		/**
-		 * The name of the key.
-		 */
-		name: string;
-	}> {
-		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		const versionPath = version ? `${version}` : "latest";
-
-		const path = this.getTransitExportKeyPath(name, "signing-key");
-		const url = `${this._baseUrl}/${path}/${versionPath}`;
-
-		try {
-			const response = await FetchHelper.fetchJson<
-				never,
-				IHashicorpVaultResponse<IExportPrivateKeyResponse>
-			>(this.CLASS_NAME, url, HttpMethod.GET, undefined, { headers: this._headers });
-
-			if (response?.data) {
-				const { keys } = response.data;
-				const keyVersion = Object.keys(keys)[0];
-				const privateKeyBase64 = keys[keyVersion];
-				const privateKey = Converter.base64ToBytes(privateKeyBase64);
-
-				const type = this.mapHashicorpKeyType(response?.data?.type);
-
-				const privateKeyData = {
-					type,
-					privateKey: Uint8Array.from(privateKey),
-					name: response?.data?.name
-				};
-				return privateKeyData;
-			}
-
-			throw new NotFoundError(this.CLASS_NAME, "privateKeyNotFound", name);
-		} catch (err) {
-			if (err instanceof NotFoundError) {
-				throw err;
-			}
-			throw new GeneralError(this.CLASS_NAME, "exportPrivateKeyFailed", { name }, err);
-		}
-	}
-
-	/**
 	 * Fetch the versions of a secret.
 	 * @param name The name of the secret.
 	 * @returns The versions of the secret.
@@ -984,16 +968,6 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 */
 	private getSecretPath(name: string): string {
 		return `${this._kvMountPath}/data/${name}`;
-	}
-
-	/**
-	 * Get the path for deleting a secret.
-	 * @param name The name of the secret.
-	 * @returns The path for deleting the secret.
-	 * @internal
-	 */
-	private getDeleteSecretPath(name: string): string {
-		return `${this._kvMountPath}/destroy/${name}`;
 	}
 
 	/**

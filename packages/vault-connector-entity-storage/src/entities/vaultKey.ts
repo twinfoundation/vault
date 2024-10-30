@@ -30,5 +30,5 @@ export class VaultKey {
 	 * The public key in base64 format.
 	 */
 	@property({ type: "string" })
-	public publicKey!: string;
+	public publicKey?: string;
 }

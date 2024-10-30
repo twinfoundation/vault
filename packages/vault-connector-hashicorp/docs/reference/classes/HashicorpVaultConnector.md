@@ -216,7 +216,7 @@ True if the key can be deleted.
 
 ### addKey()
 
-> **addKey**(`name`, `type`, `privateKey`, `publicKey`): `Promise`\<`void`\>
+> **addKey**(`name`, `type`, `privateKey`, `publicKey`?): `Promise`\<`void`\>
 
 Add a key to the vault.
 
@@ -234,9 +234,9 @@ The type of the key to add.
 
 The private key to add.
 
-• **publicKey**: `Uint8Array`
+• **publicKey?**: `Uint8Array`
 
-The public key to add.
+The public key, can be undefined if the key type is symmetric.
 
 #### Returns
 
@@ -266,7 +266,7 @@ The name of the key to get.
 
 `Promise`\<`object`\>
 
-The key.
+The key, publicKey can be undefined if key is symmetric.
 
 ##### type
 
@@ -280,11 +280,11 @@ The type of the key e.g. Ed25519, Secp256k1.
 
 The private key.
 
-##### publicKey
+##### publicKey?
 
-> **publicKey**: `Uint8Array`
+> `optional` **publicKey**: `Uint8Array`
 
-The public key.
+The public key, which can be undefined if key type is symmetric.
 
 #### Implementation of
 
@@ -520,34 +520,6 @@ Nothing.
 
 ***
 
-### getPublicKey()
-
-> **getPublicKey**(`name`, `version`?): `Promise`\<`Uint8Array`\>
-
-Export the public key from the vault.
-
-#### Parameters
-
-• **name**: `string`
-
-The name of the key.
-
-• **version?**: `string`
-
-The version of the key. If omitted, the latest version of the key will be returned.
-
-#### Returns
-
-`Promise`\<`Uint8Array`\>
-
-The public key as a Uint8Array.
-
-#### Throws
-
-Error if the key cannot be exported or found.
-
-***
-
 ### backupKey()
 
 > **backupKey**(`name`): `Promise`\<`string`\>
@@ -597,3 +569,53 @@ Nothing.
 #### Throws
 
 Error if the key cannot be restored.
+
+***
+
+### exportKey()
+
+> **exportKey**(`name`, `keyPath`, `version`?): `Promise`\<`object`\>
+
+Export the key from the vault.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the key.
+
+• **keyPath**: `"public-key"` \| `"signing-key"` \| `"encryption-key"`
+
+The path of the key. Defaults to "signing-key".
+
+• **version?**: `string`
+
+The version of the key. If omitted, all versions of the key will be returned.
+
+#### Returns
+
+`Promise`\<`object`\>
+
+The key details.
+
+##### type
+
+> **type**: `VaultKeyType`
+
+The type of the key e.g. Ed25519, Secp256k1.
+
+##### key
+
+> **key**: `Uint8Array`
+
+The key.
+
+##### name
+
+> **name**: `string`
+
+The name of the key.
+
+#### Throws
+
+Error if the key cannot be exported or found.

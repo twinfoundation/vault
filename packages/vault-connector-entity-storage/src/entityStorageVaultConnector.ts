@@ -3,6 +3,7 @@
 import {
 	AlreadyExistsError,
 	Converter,
+	GeneralError,
 	Guards,
 	Is,
 	NotFoundError,
@@ -86,26 +87,29 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const seed = Bip39.mnemonicToSeed(mnemonic);
 
 		let privateKey: Uint8Array;
-		let publicKey: Uint8Array;
+		let publicKey: Uint8Array | undefined;
 
 		if (type === VaultKeyType.Ed25519) {
 			privateKey = seed.slice(0, Ed25519.PRIVATE_KEY_SIZE);
 			publicKey = Ed25519.publicKeyFromPrivateKey(privateKey);
-		} else {
+		} else if (type === VaultKeyType.Secp256k1) {
 			privateKey = seed.slice(0, Secp256k1.PRIVATE_KEY_SIZE);
 			publicKey = Secp256k1.publicKeyFromPrivateKey(privateKey);
+		} else {
+			// ChaCha20Poly1305 is symmetric, so the private key is the same as the public key.
+			privateKey = seed.slice(0, 32);
 		}
 
 		const vaultKey: VaultKey = {
 			id: name,
 			type,
 			privateKey: Converter.bytesToBase64(privateKey),
-			publicKey: Converter.bytesToBase64(publicKey)
+			publicKey: Is.undefined(publicKey) ? undefined : Converter.bytesToBase64(publicKey)
 		};
 
 		await this._vaultKeyEntityStorageConnector.set(vaultKey);
 
-		return publicKey;
+		return publicKey ?? privateKey;
 	}
 
 	/**
@@ -113,14 +117,14 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	 * @param name The name of the key to add to the vault.
 	 * @param type The type of key to add.
 	 * @param privateKey The private key.
-	 * @param publicKey The public key.
+	 * @param publicKey The public key, can be undefined if the key type is symmetric.
 	 * @returns Nothing.
 	 */
 	public async addKey(
 		name: string,
 		type: VaultKeyType,
 		privateKey: Uint8Array,
-		publicKey: Uint8Array
+		publicKey?: Uint8Array
 	): Promise<void> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 		Guards.arrayOneOf<VaultKeyType>(
@@ -130,7 +134,9 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			Object.values(VaultKeyType)
 		);
 		Guards.uint8Array(this.CLASS_NAME, nameof(privateKey), privateKey);
-		Guards.uint8Array(this.CLASS_NAME, nameof(publicKey), publicKey);
+		if (type !== VaultKeyType.ChaCha20Poly1305) {
+			Guards.uint8Array(this.CLASS_NAME, nameof(publicKey), publicKey);
+		}
 
 		const existingVaultKey = await this._vaultKeyEntityStorageConnector.get(name);
 		if (!Is.empty(existingVaultKey)) {
@@ -141,7 +147,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			id: name,
 			type,
 			privateKey: Converter.bytesToBase64(privateKey),
-			publicKey: Converter.bytesToBase64(publicKey)
+			publicKey: Is.undefined(publicKey) ? undefined : Converter.bytesToBase64(publicKey)
 		};
 
 		await this._vaultKeyEntityStorageConnector.set(vaultKey);
@@ -150,7 +156,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Get a key from the vault.
 	 * @param name The name of the key to get from the vault.
-	 * @returns The key.
+	 * @returns The key, publicKey can be undefined if key is symmetric.
 	 */
 	public async getKey(name: string): Promise<{
 		/**
@@ -164,9 +170,9 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		privateKey: Uint8Array;
 
 		/**
-		 * The public key.
+		 * The public key, which can be undefined if key type is symmetric.
 		 */
-		publicKey: Uint8Array;
+		publicKey?: Uint8Array;
 	}> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
 
@@ -178,7 +184,9 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		return {
 			type: vaultKey.type,
 			privateKey: Converter.base64ToBytes(vaultKey.privateKey),
-			publicKey: Converter.base64ToBytes(vaultKey.publicKey)
+			publicKey: Is.undefined(vaultKey.publicKey)
+				? undefined
+				: Converter.base64ToBytes(vaultKey.publicKey)
 		};
 	}
 
@@ -239,8 +247,10 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const privateKeyBytes = Converter.base64ToBytes(vaultKey.privateKey);
 		if (vaultKey.type === VaultKeyType.Ed25519) {
 			signatureBytes = Ed25519.sign(privateKeyBytes, data);
-		} else {
+		} else if (vaultKey.type === VaultKeyType.Secp256k1) {
 			signatureBytes = Secp256k1.sign(privateKeyBytes, data);
+		} else {
+			throw new GeneralError(this.CLASS_NAME, "unsupportedKeyType", { keyType: vaultKey.type });
 		}
 
 		return signatureBytes;
@@ -263,12 +273,15 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 			throw new NotFoundError(this.CLASS_NAME, "keyNotFound", name);
 		}
 
-		const publicKeyBytes = Converter.base64ToBytes(vaultKey.publicKey);
-
 		if (vaultKey.type === VaultKeyType.Ed25519) {
+			const publicKeyBytes = Converter.base64ToBytes(vaultKey.publicKey ?? "");
 			return Ed25519.verify(publicKeyBytes, data, signature);
+		} else if (vaultKey.type === VaultKeyType.Secp256k1) {
+			const publicKeyBytes = Converter.base64ToBytes(vaultKey.publicKey ?? "");
+			return Secp256k1.verify(publicKeyBytes, data, signature);
 		}
-		return Secp256k1.verify(publicKeyBytes, data, signature);
+
+		throw new GeneralError(this.CLASS_NAME, "unsupportedKeyType", { keyType: vaultKey.type });
 	}
 
 	/**
@@ -295,6 +308,16 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(name);
 		if (Is.empty(vaultKey)) {
 			throw new NotFoundError(this.CLASS_NAME, "keyNotFound", name);
+		}
+
+		if (
+			encryptionType === VaultEncryptionType.ChaCha20Poly1305 &&
+			vaultKey.type !== VaultKeyType.ChaCha20Poly1305
+		) {
+			throw new GeneralError(this.CLASS_NAME, "keyTypeMismatch", {
+				encryptionType,
+				keyType: vaultKey.type
+			});
 		}
 
 		const privateKey = Converter.base64ToBytes(vaultKey.privateKey);
@@ -335,6 +358,16 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 		const vaultKey = await this._vaultKeyEntityStorageConnector.get(name);
 		if (Is.empty(vaultKey)) {
 			throw new NotFoundError(this.CLASS_NAME, "keyNotFound", name);
+		}
+
+		if (
+			encryptionType === VaultEncryptionType.ChaCha20Poly1305 &&
+			vaultKey.type !== VaultKeyType.ChaCha20Poly1305
+		) {
+			throw new GeneralError(this.CLASS_NAME, "keyTypeMismatch", {
+				encryptionType,
+				keyType: vaultKey.type
+			});
 		}
 
 		const privateKey = Converter.base64ToBytes(vaultKey.privateKey);

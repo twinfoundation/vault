@@ -9,4 +9,9 @@ export interface IReadKeyResponse {
 	 * The name of the key.
 	 */
 	name: string;
+
+	/**
+	 * The type of the key.
+	 */
+	type: string;
 }

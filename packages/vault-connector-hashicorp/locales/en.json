@@ -20,8 +20,8 @@
 			"backupKeyNotFound": "Backup key \"{name}\" not found",
 			"backupKeyFailed": "Failed to backup key \"{name}\"",
 			"restoreKeyFailed": "Failed to restore key \"{name}\"",
-			"exportPrivateKeyFailed": "Failed to export private key \"{name}\"",
-			"privateKeyNotFound": "Private key \"{name}\" not found",
+			"exportKeyFailed": "Failed to export key \"{name}\" with keyPath \"{keyPath}\"",
+			"exportKeyNotFound": "Export key with name \"{name}\" not found",
 			"getKeyFailed": "Failed to get key \"{name}\"",
 			"signDataFailed": "Failed to sign data \"{name}\"",
 			"invalidSignResponse": "Invalid sign response \"{name}\"",
@@ -33,7 +33,8 @@
 			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\"",
 			"keyAlreadyExists": "Key \"{name}\" already exists",
 			"invalidReadKeyResponse": "Invalid read key response \"{name}\"",
-			"renameKeyFailed": "Failed to rename key \"{name}\""
+			"renameKeyFailed": "Failed to rename key \"{name}\"",
+			"keyTypeMismatch": "The key type \"{keyType}\" does not match the requested encryption method \"{encryptionType}\""
 		}
 	}
 }

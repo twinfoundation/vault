@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0.
 
 /**
- * Represents the response containing the public key.
+ * Represents the response containing the key.
  */
-export interface IExportPrivateKeyResponse {
+export interface IExportKeyResponse {
 	/**
 	 * The public key, encoded in Base64.
 	 */
