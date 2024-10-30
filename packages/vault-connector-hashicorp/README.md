@@ -16,7 +16,7 @@ The tests developed are functional tests and need an instance of Hashicorp Vault
 docker run -d --name twin-hashicorp-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault:1.18.0
 ```
 
-After starting the vault, you need to do the following steps:
+After starting the vault, you need to do the following steps within the docker shell:
 
 1. Set the environment variables for the vault address and token:
 
@@ -31,7 +31,7 @@ export VAULT_TOKEN='root'
 vault secrets enable -address="http://127.0.0.1:8200" transit
 ```
 
-Afterwards you can run the tests as follows:
+Afterwards you can run the tests from your development environment as follows:
 
 ```sh
 npm run test
