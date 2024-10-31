@@ -173,11 +173,11 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const url = `${this._baseUrl}/${path}`;
 			const payload = {
 				data: {
-					base64: Converter.bytesToBase64(ObjectHelper.toBytes(data))
+					secret: data
 				}
 			};
 
-			await FetchHelper.fetchJson<IHashicorpVaultRequest, unknown>(
+			await FetchHelper.fetchJson<IHashicorpVaultRequest<T>, unknown>(
 				this.CLASS_NAME,
 				url,
 				HttpMethod.POST,
@@ -210,7 +210,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const path = this.getSecretPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const response = await FetchHelper.fetchJson<never, IHashicorpVaultResponse<ISecretData>>(
+			const response = await FetchHelper.fetchJson<never, IHashicorpVaultResponse<ISecretData<T>>>(
 				this.CLASS_NAME,
 				url,
 				HttpMethod.GET,
@@ -218,7 +218,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 				{ headers: this._headers }
 			);
 
-			return ObjectHelper.fromBytes<T>(Converter.base64ToBytes(response.data.data.base64));
+			return response.data.data.secret as T;
 		} catch (err) {
 			if (err instanceof FetchError && err.properties?.httpStatus === 404) {
 				throw new NotFoundError(this.CLASS_NAME, "secretNotFound", name, err);

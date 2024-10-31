@@ -4,11 +4,11 @@
 /**
  * Base interface for all Hashicorp Vault API requests.
  */
-export interface IHashicorpVaultRequest {
+export interface IHashicorpVaultRequest<T> {
 	/**
 	 * The request data.
 	 */
 	data: {
-		base64: string;
+		secret: T;
 	};
 }
