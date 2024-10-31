@@ -32,7 +32,7 @@ The configuration for the Hashicorp Vault connector.
 
 ### NAMESPACE
 
-> `readonly` `static` **NAMESPACE**: `string` = `"hashicorp-storage"`
+> `readonly` `static` **NAMESPACE**: `string` = `"hashicorp"`
 
 The namespace supported by the vault connector.
 
@@ -194,26 +194,6 @@ The private key.
 
 ***
 
-### getKeyDeleteConfiguration()
-
-> **getKeyDeleteConfiguration**(`name`): `Promise`\<`boolean`\>
-
-Get the key configuration.
-
-#### Parameters
-
-• **name**: `string`
-
-The name of the key to get the configuration for.
-
-#### Returns
-
-`Promise`\<`boolean`\>
-
-True if the key can be deleted.
-
-***
-
 ### addKey()
 
 > **addKey**(`name`, `type`, `privateKey`, `publicKey`?): `Promise`\<`void`\>
@@ -272,7 +252,7 @@ The key, publicKey can be undefined if key is symmetric.
 
 > **type**: `VaultKeyType`
 
-The type of the key e.g. Ed25519, Secp256k1.
+The type of the key e.g. Ed25519.
 
 ##### privateKey
 
@@ -602,7 +582,7 @@ The key details.
 
 > **type**: `VaultKeyType`
 
-The type of the key e.g. Ed25519, Secp256k1.
+The type of the key e.g. Ed25519.
 
 ##### key
 
@@ -619,3 +599,23 @@ The name of the key.
 #### Throws
 
 Error if the key cannot be exported or found.
+
+***
+
+### getKeyDeleteConfiguration()
+
+> **getKeyDeleteConfiguration**(`name`): `Promise`\<`boolean`\>
+
+Get the key configuration.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the key to get the configuration for.
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+True if the key can be deleted.

@@ -6,9 +6,12 @@ import {
 	Converter,
 	GeneralError,
 	Guards,
+	Is,
 	NotFoundError,
-	NotSupportedError
+	ObjectHelper,
+	RandomHelper
 } from "@twin.org/core";
+import { Ed25519 } from "@twin.org/crypto";
 import { LoggingConnectorFactory } from "@twin.org/logging-models";
 import { nameof } from "@twin.org/nameof";
 import { type IVaultConnector, VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
@@ -41,7 +44,13 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	/**
 	 * The namespace supported by the vault connector.
 	 */
-	public static readonly NAMESPACE: string = "hashicorp-storage";
+	public static readonly NAMESPACE: string = "hashicorp";
+
+	/**
+	 * The prefix to strip from keys and encrypted data.
+	 * @internal
+	 */
+	private static readonly _DATA_PREFIX: string = "vault:v1:";
 
 	/**
 	 * Runtime name for the class.
@@ -310,28 +319,6 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Get the key configuration.
-	 * @param name The name of the key to get the configuration for.
-	 * @returns True if the key can be deleted.
-	 */
-	public async getKeyDeleteConfiguration(name: string): Promise<boolean> {
-		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
-		const path = this.getTransitKeyPath(name);
-		const url = `${this._baseUrl}/${path}`;
-
-		try {
-			const response = await FetchHelper.fetchJson<
-				never,
-				IHashicorpVaultResponse<IKeyDeleteConfigResponse>
-			>(this.CLASS_NAME, url, HttpMethod.GET, undefined, { headers: this._headers });
-
-			return response.data.deletion_allowed;
-		} catch (err) {
-			throw new GeneralError(this.CLASS_NAME, "getKeyDeleteConfigurationFailed", { name }, err);
-		}
-	}
-
-	/**
 	 * Add a key to the vault.
 	 * @param name The name of the key to add.
 	 * @param type The type of the key to add.
@@ -345,8 +332,64 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		privateKey: Uint8Array,
 		publicKey?: Uint8Array
 	): Promise<void> {
-		// Adding (asymmetric) keys is not supported by HashiCorp Vault's Transit Secrets Engine. Please generate keys within Vault. For more information, refer to HashiCorp's [Transit Secrets Engine Documentation](https://www.vaultproject.io/docs/secrets/transit).
-		throw new NotSupportedError(this.CLASS_NAME, "addKeyNotSupported");
+		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
+		Guards.arrayOneOf<VaultKeyType>(
+			this.CLASS_NAME,
+			nameof(type),
+			type,
+			Object.values(VaultKeyType)
+		);
+		Guards.uint8Array(this.CLASS_NAME, nameof(privateKey), privateKey);
+
+		try {
+			// Check if the key exists
+			const existingVaultKey = await this.readKey(name);
+			if (existingVaultKey) {
+				throw new AlreadyExistsError(this.CLASS_NAME, "keyAlreadyExists", name);
+			}
+		} catch (err) {
+			if (!(err instanceof FetchError && err.properties?.httpStatus === 404)) {
+				throw err;
+			}
+		}
+
+		try {
+			const combinedKey = new Uint8Array(privateKey.length + (publicKey?.length ?? 0));
+			combinedKey.set(privateKey);
+			if (publicKey) {
+				combinedKey.set(publicKey, privateKey.length);
+			}
+
+			const internalType = this.mapVaultKeyTypeToIndex(type);
+
+			const payload = {
+				policy: {
+					name,
+					keys: {
+						"1": {
+							key: Converter.bytesToBase64(combinedKey),
+							hmac_key: Converter.bytesToBase64(RandomHelper.generate(32)), // eslint-disable-line camelcase
+							public_key: Is.undefined(publicKey) ? null : Converter.bytesToBase64(publicKey) // eslint-disable-line camelcase
+						}
+					},
+					exportable: true,
+					allow_plaintext_backup: true, // eslint-disable-line camelcase
+					min_decryption_version: 1, // eslint-disable-line camelcase
+					min_encryption_version: 0, // eslint-disable-line camelcase
+					latest_version: 1, // eslint-disable-line camelcase
+					type: internalType // eslint-disable-line camelcase
+				}
+			};
+
+			const backup = Converter.bytesToBase64(ObjectHelper.toBytes(payload));
+
+			await this.restoreKey(name, backup);
+		} catch (err) {
+			if (err instanceof AlreadyExistsError) {
+				throw err;
+			}
+			throw new GeneralError(this.CLASS_NAME, "addKeyFailed", { name, type }, err);
+		}
 	}
 
 	/**
@@ -356,7 +399,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 */
 	public async getKey(name: string): Promise<{
 		/**
-		 * The type of the key e.g. Ed25519, Secp256k1.
+		 * The type of the key e.g. Ed25519.
 		 */
 		type: VaultKeyType;
 
@@ -488,9 +531,8 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			if (response?.data?.signature) {
 				const signatureString = response.data.signature;
 
-				const prefix = "vault:v1:";
-				const cleanedSignature = signatureString.startsWith(prefix)
-					? signatureString.slice(prefix.length)
+				const cleanedSignature = signatureString.startsWith(HashicorpVaultConnector._DATA_PREFIX)
+					? signatureString.slice(HashicorpVaultConnector._DATA_PREFIX.length)
 					: signatureString;
 
 				const signatureBytes = Converter.base64ToBytes(cleanedSignature);
@@ -527,8 +569,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const base64Data = Converter.bytesToBase64(data);
 			const signatureBase64 = Converter.bytesToBase64(signature);
 
-			const prefix = "vault:v1:";
-			const prefixedSignature = `${prefix}${signatureBase64}`;
+			const prefixedSignature = `${HashicorpVaultConnector._DATA_PREFIX}${signatureBase64}`;
 
 			const payload = {
 				input: base64Data,
@@ -596,10 +637,8 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const path = this.getTransitEncryptPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const base64ata = Converter.bytesToBase64(data);
-
 			const payload = {
-				plaintext: base64ata
+				plaintext: Converter.bytesToBase64(data)
 			};
 
 			const response = await FetchHelper.fetchJson<
@@ -609,7 +648,12 @@ export class HashicorpVaultConnector implements IVaultConnector {
 
 			if (response?.data?.ciphertext) {
 				const { ciphertext } = response.data;
-				return Converter.utf8ToBytes(ciphertext);
+
+				const cleanedCiphertext = ciphertext.startsWith(HashicorpVaultConnector._DATA_PREFIX)
+					? ciphertext.slice(HashicorpVaultConnector._DATA_PREFIX.length)
+					: ciphertext;
+
+				return Converter.base64ToBytes(cleanedCiphertext);
 			}
 			throw new GeneralError(this.CLASS_NAME, "invalidEncryptResponse", { name, encryptionType });
 		} catch (err) {
@@ -648,10 +692,10 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const path = this.getTransitDecryptPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const ciphertext = Converter.bytesToUtf8(encryptedData);
+			const ciphertext = Converter.bytesToBase64(encryptedData);
 
 			const payload = {
-				ciphertext
+				ciphertext: `${HashicorpVaultConnector._DATA_PREFIX}${ciphertext}`
 			};
 
 			const response = await FetchHelper.fetchJson<
@@ -797,7 +841,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		version?: string
 	): Promise<{
 		/**
-		 * The type of the key e.g. Ed25519, Secp256k1.
+		 * The type of the key e.g. Ed25519.
 		 */
 		type: VaultKeyType;
 
@@ -824,18 +868,27 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			>(this.CLASS_NAME, url, HttpMethod.GET, undefined, { headers: this._headers });
 
 			if (response?.data) {
-				const { keys } = response.data;
+				const { keys, type } = response.data;
 				const keyVersion = Object.keys(keys)[0];
-				const keyBase64 = keys[keyVersion];
-				const key = Converter.base64ToBytes(keyBase64);
+				let key;
 
-				const type = this.mapHashicorpKeyType(response?.data?.type);
+				const keyType = this.mapHashicorpKeyType(type);
+				if (keyType === VaultKeyType.Ed25519) {
+					key = Converter.base64ToBytes(keys[keyVersion]).slice(
+						0,
+						keyPath === "public-key" ? Ed25519.PUBLIC_KEY_SIZE : Ed25519.PRIVATE_KEY_SIZE
+					);
+				} else {
+					// VaultKeyType.ChaCha20Poly1305
+					key = Converter.base64ToBytes(keys[keyVersion]);
+				}
 
 				const keyData = {
-					type,
+					type: keyType,
 					key,
 					name: response?.data?.name
 				};
+
 				return keyData;
 			}
 
@@ -845,6 +898,28 @@ export class HashicorpVaultConnector implements IVaultConnector {
 				throw err;
 			}
 			throw new GeneralError(this.CLASS_NAME, "exportKeyFailed", { name, keyPath }, err);
+		}
+	}
+
+	/**
+	 * Get the key configuration.
+	 * @param name The name of the key to get the configuration for.
+	 * @returns True if the key can be deleted.
+	 */
+	public async getKeyDeleteConfiguration(name: string): Promise<boolean> {
+		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
+		const path = this.getTransitKeyPath(name);
+		const url = `${this._baseUrl}/${path}`;
+
+		try {
+			const response = await FetchHelper.fetchJson<
+				never,
+				IHashicorpVaultResponse<IKeyDeleteConfigResponse>
+			>(this.CLASS_NAME, url, HttpMethod.GET, undefined, { headers: this._headers });
+
+			return response.data.deletion_allowed;
+		} catch (err) {
+			throw new GeneralError(this.CLASS_NAME, "getKeyDeleteConfigurationFailed", { name }, err);
 		}
 	}
 
@@ -893,6 +968,25 @@ export class HashicorpVaultConnector implements IVaultConnector {
 				return "ed25519";
 			case VaultKeyType.ChaCha20Poly1305:
 				return "chacha20-poly1305";
+			default:
+				throw new GeneralError(this.CLASS_NAME, "unsupportedKeyType", { type });
+		}
+	}
+
+	/**
+	 * Map the vault key type to the hashicorp type index.
+	 * @param type The vault key type.
+	 * @returns The hashicorp type as a string.
+	 * @throws Error if the key type is not supported.
+	 * @internal
+	 */
+	private mapVaultKeyTypeToIndex(type: VaultKeyType): number {
+		// https://github.com/hashicorp/vault/blob/7d89f7104ed6c98e06ca2c75da20c9ef1b113831/sdk/helper/keysutil/policy.go#L58
+		switch (type) {
+			case VaultKeyType.Ed25519:
+				return 2;
+			case VaultKeyType.ChaCha20Poly1305:
+				return 5;
 			default:
 				throw new GeneralError(this.CLASS_NAME, "unsupportedKeyType", { type });
 		}

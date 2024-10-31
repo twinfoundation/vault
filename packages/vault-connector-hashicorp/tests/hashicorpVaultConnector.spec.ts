@@ -1,7 +1,7 @@
 // Copyright 2024 IOTA Stiftung.
 // SPDX-License-Identifier: Apache-2.0.
-import { AlreadyExistsError, GeneralError, I18n } from "@twin.org/core";
-import { Ed25519 } from "@twin.org/crypto";
+import { AlreadyExistsError, Converter, GeneralError, I18n } from "@twin.org/core";
+import { ChaCha20Poly1305, Ed25519 } from "@twin.org/crypto";
 import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
 import { cleanupKeys, cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
 import { HashicorpVaultConnector } from "../src/hashicorpVaultConnector";
@@ -178,7 +178,7 @@ describe("HashicorpVaultConnector", () => {
 		await cleanupKeys(["test-key"]);
 	});
 
-	test("can create and get asymmetric key", async () => {
+	test("can create and get asymmetric key ed25519", async () => {
 		const keyName = "test-key";
 		const keyType = VaultKeyType.Ed25519;
 
@@ -188,13 +188,20 @@ describe("HashicorpVaultConnector", () => {
 		expect(publicKey.length).toBeGreaterThan(0);
 
 		const retrievedPublicKey = await vaultConnector.exportKey(keyName, "public-key");
-
 		expect(retrievedPublicKey.key).toEqual(publicKey);
+
+		const retrievedPrivateKey = await vaultConnector.exportKey(keyName, "signing-key");
+		expect(retrievedPrivateKey.key).toBeDefined();
+
+		const signature = Ed25519.sign(retrievedPrivateKey.key, Converter.utf8ToBytes("test-data"));
+		expect(
+			Ed25519.verify(retrievedPublicKey.key, Converter.utf8ToBytes("test-data"), signature)
+		).toBe(true);
 
 		await cleanupKeys(["test-key"]);
 	});
 
-	test("can create and get symmetric key", async () => {
+	test("can create and get symmetric key chacha20poly1305", async () => {
 		const keyName = "test-key";
 		const keyType = VaultKeyType.ChaCha20Poly1305;
 
@@ -204,10 +211,70 @@ describe("HashicorpVaultConnector", () => {
 		expect(publicKey.length).toBeGreaterThan(0);
 
 		const retrievedPublicKey = await vaultConnector.exportKey(keyName, "encryption-key");
-
 		expect(retrievedPublicKey.key).toEqual(publicKey);
 
 		await cleanupKeys(["test-key"]);
+	});
+
+	test("can add and get asymmetric key ed25519", async () => {
+		const keyName = "test-key";
+		const keyType = VaultKeyType.Ed25519;
+
+		// Create a key
+		await vaultConnector.createKey(keyName, keyType);
+
+		// Get the key details
+		const key = await vaultConnector.getKey(keyName);
+		expect(key).toBeDefined();
+
+		// Add a secondary key with the same key data
+		const keyName2 = "test-key-2";
+		await vaultConnector.addKey(keyName2, key.type, key.privateKey, key.publicKey);
+		const key2 = await vaultConnector.getKey(keyName2);
+		expect(key2).toBeDefined();
+
+		// Sign data with both keys to compare the signatures
+		const signed = await vaultConnector.sign(keyName, Converter.utf8ToBytes("test-data"));
+		const signed2 = await vaultConnector.sign(keyName2, Converter.utf8ToBytes("test-data"));
+		expect(signed).toEqual(signed2);
+
+		await cleanupKeys(["test-key", "test-key-2"]);
+	});
+
+	test("can add and get symmetric key chacha20poly1305", async () => {
+		const keyName = "test-key";
+		const keyType = VaultKeyType.ChaCha20Poly1305;
+
+		// Create a key
+		await vaultConnector.createKey(keyName, keyType);
+
+		// Get the key details
+		const key = await vaultConnector.getKey(keyName);
+		expect(key).toBeDefined();
+
+		// Add a secondary key with the same key data
+		const keyName2 = "test-key-2";
+		await vaultConnector.addKey(keyName2, key.type, key.privateKey, key.publicKey);
+		const key2 = await vaultConnector.getKey(keyName2);
+		expect(key2).toBeDefined();
+
+		// Encrypt with original key
+		const encrypted = await vaultConnector.encrypt(
+			keyName,
+			VaultEncryptionType.ChaCha20Poly1305,
+			Converter.utf8ToBytes("test-data")
+		);
+
+		// And decrypt with the new key to demonstrate that the keys are interchangeable
+		const decrypted = await vaultConnector.decrypt(
+			keyName2,
+			VaultEncryptionType.ChaCha20Poly1305,
+			encrypted
+		);
+
+		expect(decrypted).toEqual(Converter.utf8ToBytes("test-data"));
+
+		await cleanupKeys(["test-key", "test-key-2"]);
 	});
 
 	test("can fail to get a key with no key name", async () => {
@@ -462,7 +529,7 @@ describe("HashicorpVaultConnector", () => {
 
 		await vaultConnector.createKey(keyName, keyType);
 
-		const data = Buffer.from("test-data");
+		const data = Converter.utf8ToBytes("test-data");
 
 		const signature = await vaultConnector.sign(keyName, data);
 
@@ -565,9 +632,9 @@ describe("HashicorpVaultConnector", () => {
 		const keyType = VaultKeyType.ChaCha20Poly1305;
 		const encryptionType = VaultEncryptionType.ChaCha20Poly1305;
 
-		await vaultConnector.createKey(keyName, keyType);
+		const symmetricKey = await vaultConnector.createKey(keyName, keyType);
 
-		const data = Buffer.from("test-data");
+		const data = Converter.utf8ToBytes("test-data");
 
 		const encryptedData = await vaultConnector.encrypt(keyName, encryptionType, data);
 
@@ -578,7 +645,15 @@ describe("HashicorpVaultConnector", () => {
 
 		expect(decryptedData).toBeDefined();
 		expect(decryptedData.length).toBeGreaterThan(0);
-		expect(Buffer.from(decryptedData).toString()).toEqual("test-data");
+		expect(decryptedData).toEqual(data);
+
+		const nonce = encryptedData.slice(0, 12);
+		const ciphertext = encryptedData.slice(12);
+
+		const cipher = new ChaCha20Poly1305(symmetricKey, nonce);
+		const encrypted = cipher.encrypt(data);
+		expect(encrypted).toEqual(ciphertext);
+		expect(cipher.decrypt(ciphertext)).toEqual(data);
 
 		await cleanupKeys(["test-key"]);
 	});
