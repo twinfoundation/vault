@@ -16,13 +16,17 @@ The tests developed are functional tests and need an instance of Hashicorp Vault
 docker run -d --name twin-hashicorp-vault --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=root' -p 8200:8200 hashicorp/vault:1.18.0
 ```
 
-After starting the vault, you need to do the following steps within the docker shell:
+After starting the vault, you need to do the following steps within the docker shell, launch the shell using:
+
+```sh
+docker exec -t -i twin-hashicorp-vault sh
+```
 
 1. Set the environment variables for the vault address and token:
 
 ```sh
 export VAULT_ADDR="http://127.0.0.1:8200"
-export VAULT_TOKEN='root'
+export VAULT_TOKEN="root"
 ```
 
 2. Enable the transit secret engine:
