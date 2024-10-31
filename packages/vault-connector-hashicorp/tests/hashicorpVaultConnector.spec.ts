@@ -6,8 +6,11 @@ import { VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
 import { cleanupKeys, cleanupSecrets, TEST_VAULT_CONFIG } from "./setupTestEnv";
 import { HashicorpVaultConnector } from "../src/hashicorpVaultConnector";
 
-const TEST_KEY_NAME = "test-key";
-const TEST_SECRET_NAME = "test-secret";
+const TEST_KEY_NAME = "test-key=+/@!£$%^&*()";
+const TEST_SECRET_NAME =
+	"bootstrap-4d8819601e1955d4d2a1c98608629c58eb579692fb8c1b49b258726e31e8a8d4_mnemonic'";
+const TEST_RESTORE_KEY_NAME = "test-restore-origin-key=+/@!£$%^&*()";
+const TEST_RESTORE_NEW_KEY_NAME = "test-restore-new-key=+/@!£$%^&*()";
 
 let vaultConnector: HashicorpVaultConnector;
 
@@ -21,6 +24,8 @@ describe("HashicorpVaultConnector", () => {
 			config: TEST_VAULT_CONFIG
 		});
 		await vaultConnector.bootstrap();
+		await cleanupKeys([TEST_KEY_NAME, TEST_RESTORE_KEY_NAME, TEST_RESTORE_NEW_KEY_NAME]);
+		await cleanupSecrets([TEST_SECRET_NAME]);
 	});
 
 	test("can construct with dependencies", async () => {
@@ -100,8 +105,22 @@ describe("HashicorpVaultConnector", () => {
 		});
 	});
 
-	test("can set and get a secret", async () => {
-		const secretName = "test-secret";
+	test("can set and get a secret that is a string", async () => {
+		const secretName = TEST_SECRET_NAME;
+		const secretData = "foo";
+
+		await vaultConnector.setSecret(secretName, secretData);
+
+		const retrievedSecret = await vaultConnector.getSecret<typeof secretData>(secretName);
+
+		expect(retrievedSecret).toBeDefined();
+		expect(retrievedSecret).toEqual("foo");
+
+		await cleanupSecrets([TEST_SECRET_NAME]);
+	});
+
+	test("can set and get a secret that is an object", async () => {
+		const secretName = TEST_SECRET_NAME;
 		const secretData = { key: "value", number: 42 };
 
 		await vaultConnector.setSecret(secretName, secretData);
@@ -112,11 +131,11 @@ describe("HashicorpVaultConnector", () => {
 		expect(retrievedSecret.key).toEqual(secretData.key);
 		expect(retrievedSecret.number).toEqual(secretData.number);
 
-		await cleanupSecrets(["test-secret"]);
+		await cleanupSecrets([TEST_SECRET_NAME]);
 	});
 
 	test("can get the number of secret versions", async () => {
-		const secretName = "test-secret";
+		const secretName = TEST_SECRET_NAME;
 		const secretData = { key: "value", number: 42 };
 
 		await vaultConnector.setSecret(secretName, secretData);
@@ -126,11 +145,11 @@ describe("HashicorpVaultConnector", () => {
 		expect(versions).toBeDefined();
 		expect(versions.length).toBeGreaterThanOrEqual(1);
 
-		await cleanupSecrets(["test-secret"]);
+		await cleanupSecrets([TEST_SECRET_NAME]);
 	});
 
 	test("can remove a secret", async () => {
-		const secretName = "test-secret";
+		const secretName = TEST_SECRET_NAME;
 		const secretData = { key: "value", number: 42 };
 
 		await vaultConnector.setSecret(secretName, secretData);
@@ -166,20 +185,21 @@ describe("HashicorpVaultConnector", () => {
 	});
 
 	test("can fail to create a key if it already exists", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
+		await cleanupKeys([TEST_KEY_NAME]);
 		await vaultConnector.createKey(keyName, keyType);
 
 		await expect(vaultConnector.createKey(keyName, keyType)).rejects.toThrowError(
 			AlreadyExistsError
 		);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can create and get asymmetric key ed25519", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		const publicKey = await vaultConnector.createKey(keyName, keyType);
@@ -198,11 +218,11 @@ describe("HashicorpVaultConnector", () => {
 			Ed25519.verify(retrievedPublicKey.key, Converter.utf8ToBytes("test-data"), signature)
 		).toBe(true);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can create and get symmetric key chacha20poly1305", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.ChaCha20Poly1305;
 
 		const publicKey = await vaultConnector.createKey(keyName, keyType);
@@ -213,11 +233,11 @@ describe("HashicorpVaultConnector", () => {
 		const retrievedPublicKey = await vaultConnector.exportKey(keyName, "encryption-key");
 		expect(retrievedPublicKey.key).toEqual(publicKey);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can add and get asymmetric key ed25519", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		// Create a key
@@ -238,11 +258,11 @@ describe("HashicorpVaultConnector", () => {
 		const signed2 = await vaultConnector.sign(keyName2, Converter.utf8ToBytes("test-data"));
 		expect(signed).toEqual(signed2);
 
-		await cleanupKeys(["test-key", "test-key-2"]);
+		await cleanupKeys([TEST_KEY_NAME, "test-key-2"]);
 	});
 
 	test("can add and get symmetric key chacha20poly1305", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.ChaCha20Poly1305;
 
 		// Create a key
@@ -274,7 +294,7 @@ describe("HashicorpVaultConnector", () => {
 
 		expect(decrypted).toEqual(Converter.utf8ToBytes("test-data"));
 
-		await cleanupKeys(["test-key", "test-key-2"]);
+		await cleanupKeys([TEST_KEY_NAME, "test-key-2"]);
 	});
 
 	test("can fail to get a key with no key name", async () => {
@@ -298,7 +318,7 @@ describe("HashicorpVaultConnector", () => {
 	});
 
 	test("can update key configuration to allow deletion", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -310,11 +330,11 @@ describe("HashicorpVaultConnector", () => {
 		expect(deleteConfiguration).toBeDefined();
 		expect(deleteConfiguration).toEqual(true);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can remove a key", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -346,7 +366,7 @@ describe("HashicorpVaultConnector", () => {
 	});
 
 	test("can backup a key", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -357,12 +377,12 @@ describe("HashicorpVaultConnector", () => {
 		expect(typeof backup).toBe("string");
 		expect(backup.length).toBeGreaterThan(0);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can restore a key", async () => {
-		const originalKeyName = "test-restore-origin-key";
-		const restoredKeyNewName = "test-restore-new-key";
+		const originalKeyName = TEST_RESTORE_KEY_NAME;
+		const restoredKeyNewName = TEST_RESTORE_NEW_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(originalKeyName, keyType);
@@ -375,12 +395,12 @@ describe("HashicorpVaultConnector", () => {
 		expect(getRestoredKey).toBeDefined();
 		expect(getOriginalKey.key).toEqual(getRestoredKey.key);
 
-		await cleanupKeys(["test-restore-origin-key", "test-restore-new-key"]);
+		await cleanupKeys([TEST_RESTORE_KEY_NAME, TEST_RESTORE_NEW_KEY_NAME]);
 	});
 
 	test("can rename a key", async () => {
-		const originalKeyName = "test-rename-origin-key";
-		const newKeyName = "test-rename-new-key";
+		const originalKeyName = TEST_RESTORE_KEY_NAME;
+		const newKeyName = TEST_RESTORE_NEW_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(originalKeyName, keyType);
@@ -398,7 +418,7 @@ describe("HashicorpVaultConnector", () => {
 		expect(renamedKey).toBeDefined();
 		expect(renamedKey.key.length).toBeGreaterThan(0);
 
-		await cleanupKeys(["test-rename-new-key"]);
+		await cleanupKeys([newKeyName]);
 	});
 
 	test("can fail to rename a key with no key name", async () => {
@@ -437,7 +457,7 @@ describe("HashicorpVaultConnector", () => {
 	});
 
 	test("can get an asymmetric key", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -451,11 +471,11 @@ describe("HashicorpVaultConnector", () => {
 		expect(retrievedKey.privateKey.length).toBeGreaterThan(0);
 		expect(retrievedKey.type).toEqual(keyType);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can get a symmetric key", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.ChaCha20Poly1305;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -468,11 +488,11 @@ describe("HashicorpVaultConnector", () => {
 		expect(retrievedKey.privateKey.length).toBeGreaterThan(0);
 		expect(retrievedKey.type).toEqual(keyType);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can sign data with a key", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -484,11 +504,11 @@ describe("HashicorpVaultConnector", () => {
 		expect(signature).toBeDefined();
 		expect(signature.length).toBeGreaterThan(0);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can verify signature with a key", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		const publicKey = await vaultConnector.createKey(keyName, keyType);
@@ -502,11 +522,11 @@ describe("HashicorpVaultConnector", () => {
 		expect(isVerified).toBe(true);
 		expect(Ed25519.verify(publicKey, dataToSign, signature)).toBe(true);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can fail to verify signature with a key", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -520,11 +540,11 @@ describe("HashicorpVaultConnector", () => {
 
 		expect(isVerified).toBe(false);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can sign and verify data", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.Ed25519;
 
 		await vaultConnector.createKey(keyName, keyType);
@@ -537,7 +557,7 @@ describe("HashicorpVaultConnector", () => {
 
 		expect(isValid).toBe(true);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can fail to sign with a key with no key name", async () => {
@@ -628,7 +648,7 @@ describe("HashicorpVaultConnector", () => {
 	});
 
 	test("can encrypt and decrypt data", async () => {
-		const keyName = "test-key";
+		const keyName = TEST_KEY_NAME;
 		const keyType = VaultKeyType.ChaCha20Poly1305;
 		const encryptionType = VaultEncryptionType.ChaCha20Poly1305;
 
@@ -655,7 +675,7 @@ describe("HashicorpVaultConnector", () => {
 		expect(encrypted).toEqual(ciphertext);
 		expect(cipher.decrypt(ciphertext)).toEqual(data);
 
-		await cleanupKeys(["test-key"]);
+		await cleanupKeys([TEST_KEY_NAME]);
 	});
 
 	test("can fail to encrypt with a key with no key name", async () => {

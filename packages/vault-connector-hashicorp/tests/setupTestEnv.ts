@@ -37,11 +37,7 @@ export async function cleanupSecrets(secretNames: string[]): Promise<void> {
 	for (const secretName of secretNames) {
 		try {
 			await vaultConnector.removeSecret(secretName);
-		} catch (error) {
-			if (error instanceof Error) {
-				console.warn(`Failed to clean up secret ${secretName}: ${error.message}`);
-			}
-		}
+		} catch {}
 	}
 }
 
@@ -58,10 +54,6 @@ export async function cleanupKeys(keyNames: string[]): Promise<void> {
 	for (const keyName of keyNames) {
 		try {
 			await vaultConnector.removeKey(keyName);
-		} catch (error) {
-			if (error instanceof Error) {
-				console.warn(`Failed to clean up key ${keyName}: ${error.message}`);
-			}
-		}
+		} catch {}
 	}
 }

@@ -4,9 +4,11 @@
 /**
  * Interface for secret data responses.
  */
-export interface ISecretData<T> {
+export interface ISecretData {
 	/**
 	 * The secret data.
 	 */
-	data: T;
+	data: {
+		base64: string;
+	};
 }

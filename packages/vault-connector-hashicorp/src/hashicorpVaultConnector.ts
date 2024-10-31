@@ -171,9 +171,13 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		try {
 			const path = this.getSecretPath(name);
 			const url = `${this._baseUrl}/${path}`;
-			const payload = { data };
+			const payload = {
+				data: {
+					base64: Converter.bytesToBase64(ObjectHelper.toBytes(data))
+				}
+			};
 
-			await FetchHelper.fetchJson<IHashicorpVaultRequest<T>, unknown>(
+			await FetchHelper.fetchJson<IHashicorpVaultRequest, unknown>(
 				this.CLASS_NAME,
 				url,
 				HttpMethod.POST,
@@ -206,7 +210,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 			const path = this.getSecretPath(name);
 			const url = `${this._baseUrl}/${path}`;
 
-			const response = await FetchHelper.fetchJson<never, IHashicorpVaultResponse<ISecretData<T>>>(
+			const response = await FetchHelper.fetchJson<never, IHashicorpVaultResponse<ISecretData>>(
 				this.CLASS_NAME,
 				url,
 				HttpMethod.GET,
@@ -214,7 +218,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 				{ headers: this._headers }
 			);
 
-			return response.data.data as T;
+			return ObjectHelper.fromBytes<T>(Converter.base64ToBytes(response.data.data.base64));
 		} catch (err) {
 			if (err instanceof FetchError && err.properties?.httpStatus === 404) {
 				throw new NotFoundError(this.CLASS_NAME, "secretNotFound", name, err);
@@ -1055,13 +1059,23 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	}
 
 	/**
+	 * Encode the name parameter.
+	 * @param name The name to encode.
+	 * @returns The encoded name.
+	 * @internal
+	 */
+	private getEncodedName(name: string): string {
+		return name.replace(/[^\dA-Za-z-]/g, "_").replace(/[_-]+$/, "");
+	}
+
+	/**
 	 * Get the path for a secret.
 	 * @param name The name of the secret.
 	 * @returns The path for the secret.
 	 * @internal
 	 */
 	private getSecretPath(name: string): string {
-		return `${this._kvMountPath}/data/${name}`;
+		return `${this._kvMountPath}/data/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1071,7 +1085,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getSecretMetadataPath(name: string): string {
-		return `${this._kvMountPath}/metadata/${name}`;
+		return `${this._kvMountPath}/metadata/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1081,7 +1095,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitKeyPath(name: string): string {
-		return `${this._transitMountPath}/keys/${name}`;
+		return `${this._transitMountPath}/keys/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1092,7 +1106,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitExportKeyPath(name: string, keyType: string): string {
-		return `${this._transitMountPath}/export/${keyType}/${name}`;
+		return `${this._transitMountPath}/export/${keyType}/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1102,7 +1116,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitKeyConfigPath(name: string): string {
-		return `${this._transitMountPath}/keys/${name}/config`;
+		return `${this._transitMountPath}/keys/${this.getEncodedName(name)}/config`;
 	}
 
 	/**
@@ -1112,7 +1126,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitBackupKeyPath(name: string): string {
-		return `${this._transitMountPath}/backup/${name}`;
+		return `${this._transitMountPath}/backup/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1122,7 +1136,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitRestoreKeyPath(name: string): string {
-		return `${this._transitMountPath}/restore/${name}`;
+		return `${this._transitMountPath}/restore/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1132,7 +1146,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitSignPath(name: string): string {
-		return `${this._transitMountPath}/sign/${name}`;
+		return `${this._transitMountPath}/sign/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1142,7 +1156,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitVerifyPath(name: string): string {
-		return `${this._transitMountPath}/verify/${name}`;
+		return `${this._transitMountPath}/verify/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1152,7 +1166,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitEncryptPath(name: string): string {
-		return `${this._transitMountPath}/encrypt/${name}`;
+		return `${this._transitMountPath}/encrypt/${this.getEncodedName(name)}`;
 	}
 
 	/**
@@ -1162,6 +1176,6 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	 * @internal
 	 */
 	private getTransitDecryptPath(name: string): string {
-		return `${this._transitMountPath}/decrypt/${name}`;
+		return `${this._transitMountPath}/decrypt/${this.getEncodedName(name)}`;
 	}
 }
