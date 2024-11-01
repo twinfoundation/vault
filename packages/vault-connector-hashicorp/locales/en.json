@@ -31,9 +31,9 @@
 			"unsupportedEncryptionType": "Unsupported encryption type \"{encryptionType}\"",
 			"decryptDataFailed": "Failed to decrypt data \"{name, encryptionType}\"",
 			"invalidEncryptResponse": "Invalid encrypt response \"{name, encryptionType}\"",
-			"keyAlreadyExists": "Key \"{name}\" already exists",
+			"keyAlreadyExists": "Key \"{existingId}\" already exists",
 			"invalidReadKeyResponse": "Invalid read key response \"{name}\"",
-			"renameKeyFailed": "Failed to rename key \"{name}\"",
+			"renameKeyFailed": "Failed to rename key from \"{name}\" to \"{newName}\"",
 			"keyTypeMismatch": "The key type \"{keyType}\" does not match the requested encryption method \"{encryptionType}\""
 		}
 	}

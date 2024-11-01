@@ -465,6 +465,16 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		Guards.stringValue(this.CLASS_NAME, nameof(newName), newName);
 
 		try {
+			let existingVaultKey;
+			try {
+				existingVaultKey = await this.readKey(newName);
+			} catch {
+				// If we have an error we just continue as it means the key does not exist
+			}
+			if (existingVaultKey) {
+				throw new AlreadyExistsError(this.CLASS_NAME, "keyAlreadyExists", newName);
+			}
+
 			const backup = await this.backupKey(name);
 			await this.restoreKey(newName, backup);
 			await this.removeKey(name);

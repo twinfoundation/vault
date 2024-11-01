@@ -9,8 +9,10 @@ import { HashicorpVaultConnector } from "../src/hashicorpVaultConnector";
 const TEST_KEY_NAME = "test-key=+/@!£$%^&*()";
 const TEST_SECRET_NAME =
 	"bootstrap-4d8819601e1955d4d2a1c98608629c58eb579692fb8c1b49b258726e31e8a8d4_mnemonic'";
-const TEST_RESTORE_KEY_NAME = "test-restore-origin-key=+/@!£$%^&*()";
-const TEST_RESTORE_NEW_KEY_NAME = "test-restore-new-key=+/@!£$%^&*()";
+const TEST_RESTORE_KEY_NAME =
+	"did:iota:tst:0xac07260b1d822a6906018f3870aea8e50cf59fc46d29feffdf141997d25917c2/temp-vm-dkwsdrKHIM_7L1dBs-zWsA";
+const TEST_RESTORE_NEW_KEY_NAME =
+	"did:iota:tst:0xac07260b1d822a6906018f3870aea8e50cf59fc46d29feffdf141997d25917c2/immutable-proof";
 
 let vaultConnector: HashicorpVaultConnector;
 
@@ -433,6 +435,7 @@ describe("HashicorpVaultConnector", () => {
 			}
 		});
 	});
+
 	test("can fail to rename a key with no new key name", async () => {
 		await expect(
 			vaultConnector.renameKey("foo", undefined as unknown as string)
@@ -445,6 +448,7 @@ describe("HashicorpVaultConnector", () => {
 			}
 		});
 	});
+
 	test("can fail to rename a key if it doesn't exist", async () => {
 		await expect(vaultConnector.renameKey(TEST_KEY_NAME, "foo")).rejects.toMatchObject({
 			name: "GeneralError",
@@ -454,6 +458,26 @@ describe("HashicorpVaultConnector", () => {
 				newName: "foo"
 			}
 		});
+	});
+
+	test("can fail to rename a key if the new name already exists", async () => {
+		const originalKeyName = TEST_RESTORE_KEY_NAME;
+		const newKeyName = TEST_RESTORE_NEW_KEY_NAME;
+		const keyType = VaultKeyType.Ed25519;
+
+		await vaultConnector.createKey(originalKeyName, keyType);
+		await vaultConnector.createKey(newKeyName, keyType);
+
+		await expect(vaultConnector.renameKey(originalKeyName, newKeyName)).rejects.toMatchObject({
+			name: "GeneralError",
+			message: "hashicorpVaultConnector.renameKeyFailed",
+			properties: {
+				name: originalKeyName,
+				newName: newKeyName
+			}
+		});
+
+		await cleanupKeys([originalKeyName, newKeyName]);
 	});
 
 	test("can get an asymmetric key", async () => {
