@@ -24,6 +24,7 @@ import type { IEncryptDataRequest } from "./models/IEncryptDataRequest";
 import type { IEncryptDataResponse } from "./models/IEncryptDataResponse";
 import type { IExportKeyResponse } from "./models/IExportKeyResponse";
 import type { IHashicorpVaultConnectorConfig } from "./models/IHashicorpVaultConnectorConfig";
+import type { IHashicorpVaultConnectorConstructorOptions } from "./models/IHashicorpVaultConnectorConstructorOptions";
 import type { IHashicorpVaultRequest } from "./models/IHashicorpVaultRequest";
 import type { IHashicorpVaultResponse } from "./models/IHashicorpVaultResponse";
 import type { IKeyDeleteConfigResponse } from "./models/IKeyDeleteConfigResponse";
@@ -88,11 +89,10 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	private readonly _headers: IHttpHeaders;
 
 	/**
-	 * Create a new instance of HashicorpStorageVaultConnector.
+	 * Create a new instance of HashicorpVaultConnector.
 	 * @param options The options for the vault connector.
-	 * @param options.config The configuration for the Hashicorp Vault connector.
 	 */
-	constructor(options: { config: IHashicorpVaultConnectorConfig }) {
+	constructor(options: IHashicorpVaultConnectorConstructorOptions) {
 		Guards.object(this.CLASS_NAME, nameof(options), options);
 		Guards.object<IHashicorpVaultConnectorConfig>(
 			this.CLASS_NAME,

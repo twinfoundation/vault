@@ -18,6 +18,7 @@ import { nameof } from "@twin.org/nameof";
 import { type IVaultConnector, VaultEncryptionType, VaultKeyType } from "@twin.org/vault-models";
 import type { VaultKey } from "./entities/vaultKey";
 import type { VaultSecret } from "./entities/vaultSecret";
+import type { IEntityStorageVaultConnectorConstructorOptions } from "./models/IEntityStorageVaultConnectorConstructorOptions";
 
 /**
  * Class for performing vault operations in entity storage.
@@ -48,13 +49,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	/**
 	 * Create a new instance of EntityStorageVaultConnector.
 	 * @param options The options for the connector.
-	 * @param options.vaultKeyEntityStorageType The vault key entity storage connector type, defaults to "vault-key".
-	 * @param options.vaultSecretEntityStorageType The vault secret entity storage connector type, defaults to "vault-secret".
 	 */
-	constructor(options?: {
-		vaultKeyEntityStorageType?: string;
-		vaultSecretEntityStorageType?: string;
-	}) {
+	constructor(options?: IEntityStorageVaultConnectorConstructorOptions) {
 		this._vaultKeyEntityStorageConnector = EntityStorageConnectorFactory.get(
 			options?.vaultKeyEntityStorageType ?? "vault-key"
 		);
