@@ -23,7 +23,12 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        package: [vault-models, vault-connector-entity-storage, vault-connector-hashicorp]
+        package:
+          [
+            'packages/vault-models',
+            'packages/vault-connector-entity-storage',
+            'packages/vault-connector-hashicorp'
+          ]
 
     steps:
       - name: Checkout
@@ -57,7 +62,7 @@ jobs:
 
       - name: Check package version does not contain -next
         run: |
-          cd packages/${{ matrix.package }}
+          cd ${{ matrix.package }}
           PACKAGE_VERSION=$(cat package.json | jq '.version' | tr -d '"')
           echo Package Version $PACKAGE_VERSION
           if [[ $PACKAGE_VERSION == *"-next"* ]]; then
@@ -67,19 +72,19 @@ jobs:
 
       - name: Run Dist
         run: |
-          cd packages/${{ matrix.package }}
+          cd ${{ matrix.package }}
           npm install
           npm run dist
 
       - name: Cleanup package properties
         run: |
-          cd packages/${{ matrix.package }}
+          cd ${{ matrix.package }}
           npm pkg delete scripts
           npm pkg delete devDependencies
 
       - name: Publish
         run: |
-          cd packages/${{ matrix.package }}
+          cd ${{ matrix.package }}
           npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
