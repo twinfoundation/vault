@@ -259,10 +259,10 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Create a key in the vault.
-	 * @param name The name of the key to create.
-	 * @param type The type of the key to create.
-	 * @returns The private key.
+	 * Generate a new key and store it in the vault.
+	 * @param name The name of the key to generate and store in the vault.
+	 * @param type The type of key to create.
+	 * @returns The public key for the key pair.
 	 */
 	public async createKey(name: string, type: VaultKeyType): Promise<Uint8Array> {
 		Guards.stringValue(this.CLASS_NAME, nameof(name), name);
@@ -323,10 +323,10 @@ export class HashicorpVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Add a key to the vault.
-	 * @param name The name of the key to add.
-	 * @param type The type of the key to add.
-	 * @param privateKey The private key to add.
+	 * Add an existing key to the vault.
+	 * @param name The name of the key to add to the vault.
+	 * @param type The type of key to add.
+	 * @param privateKey The private key.
 	 * @param publicKey The public key, can be undefined if the key type is symmetric.
 	 * @returns Nothing.
 	 */

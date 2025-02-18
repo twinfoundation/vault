@@ -60,8 +60,8 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Create a key in the vault.
-	 * @param name The name of the key to create in the vault.
+	 * Generate a new key and store it in the vault.
+	 * @param name The name of the key to generate and store in the vault.
 	 * @param type The type of key to create.
 	 * @returns The public key for the key pair.
 	 */
@@ -109,7 +109,7 @@ export class EntityStorageVaultConnector implements IVaultConnector {
 	}
 
 	/**
-	 * Add a key to the vault.
+	 * Add an existing key to the vault.
 	 * @param name The name of the key to add to the vault.
 	 * @param type The type of key to add.
 	 * @param privateKey The private key.
