@@ -4,3 +4,4 @@ export * from "./factories/vaultConnectorFactory";
 export * from "./models/IVaultConnector";
 export * from "./models/vaultEncryptionType";
 export * from "./models/vaultKeyType";
+export * from "./utils/vaultConnectorHelper";

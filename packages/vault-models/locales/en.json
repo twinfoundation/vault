@@ -1,3 +1,7 @@
 {
-	"error": {}
+	"error": {
+		"vaultConnectorHelper": {
+			"invalidSignature": "The JSON Web token signature could not be verified"
+		}
+	}
 }
