@@ -9,7 +9,8 @@ import {
 	Is,
 	NotFoundError,
 	ObjectHelper,
-	RandomHelper
+	RandomHelper,
+	StringHelper
 } from "@twin.org/core";
 import { Ed25519 } from "@twin.org/crypto";
 import { LoggingConnectorFactory } from "@twin.org/logging-models";
@@ -105,7 +106,7 @@ export class HashicorpVaultConnector implements IVaultConnector {
 		this._config = options.config;
 		this._kvMountPath = this._config.kvMountPath ?? "secret";
 		this._transitMountPath = this._config.transitMountPath ?? "transit";
-		this._baseUrl = `${this._config.endpoint}/${this._config.apiVersion ?? "v1"}`;
+		this._baseUrl = `${StringHelper.trimTrailingSlashes(this._config.endpoint)}/${this._config.apiVersion ?? "v1"}`;
 		this._headers = {
 			"X-Vault-Token": this._config.token
 		};
