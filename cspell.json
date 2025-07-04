@@ -6,16 +6,22 @@
 		"**/coverage/**",
 		"**/dist/**",
 		"**/docs/reference/**",
+		"**/docs/open-api/**",
 		"**/tests/**",
 		"*.yaml",
 		"package.json",
 		"rollup.config.mjs",
-		"vitest.config.ts",
+		"vitest.config.*",
 		"tsconfig.json",
 		"typedoc.json",
 		".eslintrc.cjs",
 		"**/wordlists/**"
 	],
-	"words": ["bech", "gtsc", "nameof", "Stiftung"],
-	"ignoreRegExpList": ["/from\\s+(['\"]).*\\1/", "/eslint-disable.*/"]
+	"words": ["abbrev", "autorelease", "chacha", "nameof", "Secp", "Stiftung"],
+	"ignoreRegExpList": [
+		"/from\\s+(['\"]).*\\1/",
+		"/eslint-disable.*/",
+		"/^```shell[\\s\\S]*?```$/gm",
+		"/^```json[\\s\\S]*?```$/gm"
+	]
 }

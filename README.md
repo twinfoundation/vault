@@ -1,11 +1,12 @@
-# GTSC / Vault
+# TWIN Vault
 
-This mono-repository contains the packages to use with Vaults in GTSC applications.
+This mono-repository contains the packages to use with Vaults in TWIN applications.
 
 ## Packages
 
-- [vault-provider-models](packages/vault-provider-models/README.md) - Models which define the structure of the vault provider implementations.
-- [vault-provider-memory](packages/vault-provider-memory/README.md) - Vault provider implementation using in memory storage.
+- [vault-models](packages/vault-models/README.md) - Models which define the structure of the vault contracts and connectors.
+- [vault-connector-entity-storage](packages/vault-connector-entity-storage/README.md) - Vault connector implementation using entity storage.
+- [vault-connector-hashicorp](packages/vault-connector-hashicorp/README.md) - Vault connector implementation using Hashicorp.
 
 ## Contributing
 
